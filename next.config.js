@@ -5,6 +5,19 @@
 import "./src/env.js";
 
 /** @type {import("next").NextConfig} */
-const config = {};
+const config = {
+    images: {
+        remotePatterns: [
+            {
+        protocol: "https",
+                hostname: "**", // 모든 https 도메인 허용
+            },
+            {
+                protocol: "http",
+                hostname: "**", // 모든 http 도메인 허용
+            },
+        ]
+    }
+};
 
 export default config;

@@ -22,7 +22,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`}>
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <TRPCReactProvider>
+          <div className={"w-svw min-h-[100dvh] bg-black flex justify-center"}>
+            <div className={"w-full md:max-w-[500px] h-dvh bg-white"}>
+              {children}
+            </div>
+          </div>
+        </TRPCReactProvider>
       </body>
     </html>
   );

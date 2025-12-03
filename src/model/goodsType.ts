@@ -1,0 +1,1 @@
+export type GoodsType = "OUTERWEAR" | "KNITWEAR" | "BOTTOMS" | "DRESSES";
