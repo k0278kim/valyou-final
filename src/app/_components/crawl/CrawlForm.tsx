@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import SocialSearch from '../social_search/SocialSearch';
+import SocialCrawlViewer from './SocialCrawlViewer';
 
 // 1. 데이터 타입 정의 (API 응답과 일치시킴)
 interface Review {
@@ -39,6 +41,43 @@ export default function MusinsaCrawlPage() {
   const [data, setData] = useState<CrawlData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const getCleanKeyword = (brand: string, title: string) => {
+    // 1. 브랜드명 제거 (중복 방지)
+    let query = title.replace(brand, '').trim();
+    
+    // 2. 잡다한 특수문자 및 옵션 제거
+    query = query.replace(/\[.*?\]/g, '')  // [옵션] 제거
+                 .replace(/\(.*?\)/g, '')  // (영어명) 제거
+                 .replace(/[-|].*$/, '')   // 뒤에 붙은 꼬리말 제거
+                 .replace(/\b\d{2,4}\s?[SF\/W]+\b/gi, '') // 22 S/S 등 시즌 제거
+                 .replace(/\b(19|20)?2[0-9]\b/g, '');     // 연도 숫자 제거
+
+    // 3. 핵심 카테고리 단어만 추출 (여기가 핵심!)
+    // 상품명에 들어있는 단어 중 '패션 카테고리'에 해당하는 것만 남기면 정확도가 급상승합니다.
+    const fashionKeywords = [
+        '코트', '자켓', '패딩', '후리스', '플리스', '가디건', '니트', '스웨터',
+        '맨투맨', '후드', '티셔츠', '셔츠', '바지', '데님', '슬랙스', '치마', '원피스',
+        '백팩', '가방', '신발', '부츠', '모자'
+    ];
+    
+    let category = '';
+    for (const key of fashionKeywords) {
+        if (query.includes(key)) {
+            category = key;
+            break; // 하나 찾으면 스톱
+        }
+    }
+
+    // 카테고리를 못 찾았다면, 어쩔 수 없이 정제된 제목의 앞 2어절만 사용
+    if (!category) {
+        const words = query.trim().split(/\s+/);
+        category = words.slice(0, 2).join(' ');
+    }
+
+    // 최종 검색어: "브랜드명 + 카테고리" (예: 낫온리포투데이 플리스)
+    return `${brand} ${category}`.trim();
+};
 
   const handleCrawl = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,6 +133,11 @@ export default function MusinsaCrawlPage() {
         {/* 2. 결과 섹션 */}
         {data && (
           <div className="space-y-6 animate-fade-in-up">
+
+            <SocialCrawlViewer 
+                brand={data.basicInfo.brand}
+                initialKeyword={getCleanKeyword(data.basicInfo.brand, data.basicInfo.title)} 
+            />
             
             {/* A. 기본 정보 카드 */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-8">
