@@ -1,0 +1,163 @@
+<!DOCTYPE html><html lang="ko"><head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, viewport-fit=cover">
+	<title>무신사</title>
+	<style>
+		@font-face {
+			font-family: "Musinsa";
+			font-weight: 500;
+			font-style: normal;
+			src: url('//image.msscdn.net/fonts_v3_2/musinsaot-Medium.eot');
+			src: local("☺"),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Medium.eot?#iefix') format('embedded-opentype'),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Medium.woff2') format('woff2'),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Medium.woff') format('woff'),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Medium.ttf') format('truetype'),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Medium.svg#MusinsaRegualr') format('svg');
+		}
+
+		@font-face {
+			font-family: "Musinsa";
+			font-weight: 300;
+			font-style: normal;
+			src: url('//image.msscdn.net/fonts_v3_2/musinsaot-Light.eot');
+			src: local("☺"),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Light.eot?#iefix') format('embedded-opentype'),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Light.woff2') format('woff2'),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Light.woff') format('woff'),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Light.ttf') format('truetype'),
+			url('//image.msscdn.net/fonts_v3_2/musinsaot-Light.svg#MusinsaLight') format('svg');
+		}
+
+		* {
+			font-family: 'Auto', sans-serif;
+			color: #000;
+			margin: 0;
+			padding: 0
+		}
+
+		html, body {
+			height: 100%
+		}
+
+		body {
+			height: 100%
+		}
+
+		.error-network-wrap {
+			position: relative;
+			width: 100%;
+			height: 100%;
+			min-height: 533px;
+			margin: 0;
+			padding-top: 30px;
+			padding-bottom: constant(safe-area-inset-bottom);
+			padding-bottom: env(safe-area-inset-bottom);
+			-webkit-box-sizing: border-box;
+			box-sizing: border-box;
+			overflow: hidden;
+			text-align: center
+		}
+
+		.error-network-logo {
+			height: 17px;
+			margin-bottom: 121px;
+			background: url(https://image.msscdn.net/images/network_logo.png) no-repeat 50% 50%;
+			background-size: auto 17px;
+			overflow: hidden;
+			text-indent: -9999px
+		}
+
+		.error-network-text {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			-webkit-transform: translate(-50%, -50%);
+			transform: translate(-50%, -50%);
+			width: 100%;
+			min-width: 308px;
+			padding: 0 30px;
+			-webkit-box-sizing: border-box;
+			box-sizing: border-box;
+			text-align: center
+		}
+
+		.error-network-text:before {
+			content: "";
+			display: inline-block;
+			width: 90px;
+			height: 90px;
+			background: url(https://image.msscdn.net/images/network_browser_icon.png) no-repeat 50% 50%;
+			background-size: 66px 62px
+		}
+
+		.error-network-text > strong {
+			display: block;
+			margin: 20px 0 16px 0;
+			font-weight: 500;
+			font-size: 30px;
+			line-height: 38px;
+			font-family: "Musinsa", "AppleSDGothicNeo", "Apple SD Gothic Neo", "Apple SD 산돌고딕 Neo", sans-serif
+		}
+
+		.error-network-text > p {
+			color: #777;
+			font-size: 14px;
+			line-height: 20px
+		}
+
+		.error-network-text > .btn {
+			display: block;
+			width: 130px;
+			height: 50px;
+			margin: 40px auto 5px;
+			background-color: #000;
+			color: #fff;
+			font-size: 14px;
+			line-height: 50px;
+			font-weight: bold;
+			text-decoration: none;
+			text-align: center
+		}
+
+		.error-network-text > .link {
+			display: block;
+			width: 130px;
+			height: 50px;
+			margin: 0 auto;
+			background-color: #fff;
+			color: #777;
+			font-size: 14px;
+			line-height: 50px;
+			font-weight: bold;
+			text-decoration: none;
+			text-align: center
+		}
+
+		@media only screen and (max-width: 520px) {
+			.error-network-text {
+				padding: 40px 6px 0
+			}
+		}
+	</style>
+	<script src="https://static.msscdn.net/static/member/js/jquery-3.4.1.min.js" type="text/javascript"></script>
+	<script src="https://static.msscdn.net/static/member/js/appscript.js" type="text/javascript"></script>
+</head>
+
+<body>
+<div class="error-network-wrap">
+	<h1 class="error-network-logo">MUSINSA</h1>
+	<div class="error-network-text">
+		<strong>페이지를 찾을 수<br>없습니다</strong>
+		<p>페이지의 주소가 잘못 입력되었거나,
+			<br>변경 혹은 삭제되어 요청하신 페이지를 찾을 수 없습니다.
+			<br>입력하신 페이지 주소를 다시 한번 확인해 주세요.
+		</p>
+		<a class="btn" href="https://www.musinsa.com">무신사 홈</a>
+		<a class="link" href="javascript:void(0)" onclick="AppInterface.historyBack()">이전 페이지</a>
+	</div>
+</div>
+
+
+
+</body></html>
