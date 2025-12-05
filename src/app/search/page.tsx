@@ -37,7 +37,7 @@ function SearchContent() {
    const [userProfile, setUserProfile] = useState<any>(null);
    const [recommendedSize, setRecommendedSize] = useState<string | null>(null);
    const [similarBodyFilter, setSimilarBodyFilter] = useState(false);
-   const [fitPrediction, setFitPrediction] = useState<string | null>(null);
+   const [fitPrediction, setFitPrediction] = useState<any>(null);
    const [isFitAnalyzing, setIsFitAnalyzing] = useState(false);
 
    useEffect(() => {
@@ -58,8 +58,8 @@ function SearchContent() {
 
    // Calculate recommended size when data or userProfile changes
    useEffect(() => {
-      if (data?.sizeTable && userProfile?.idealSize) {
-         const bestFit = calculateRecommendedSize(data.sizeTable, userProfile.idealSize);
+      if (data?.sizeTable && userProfile?.idealSize && data.basicInfo?.category1) {
+         const bestFit = calculateRecommendedSize(data.sizeTable, userProfile.idealSize, data.basicInfo.category1);
          setRecommendedSize(bestFit);
 
          // Trigger AI Fit Prediction if a size is recommended
@@ -93,8 +93,11 @@ function SearchContent() {
       }
    };
 
-   const calculateRecommendedSize = (sizeTable: any, idealSize: any) => {
-      if (!sizeTable?.rows || !idealSize) return null;
+   const calculateRecommendedSize = (sizeTable: any, idealSize: any, category: string) => {
+      if (!sizeTable?.rows || !idealSize || !category) return null;
+
+      const categoryIdeal = idealSize[category];
+      if (!categoryIdeal) return null;
 
       let bestSize = null;
       let minDiff = Infinity;
@@ -105,11 +108,10 @@ function SearchContent() {
 
          sizeTable.headers.forEach((header: string, idx: number) => {
             // Match headers (Length, Shoulder, Chest, Sleeve)
-            // This is a simple matching logic, might need refinement based on actual header names
-            const key = Object.keys(idealSize).find(k => header.includes(k) || k.includes(header));
+            const key = Object.keys(categoryIdeal).find(k => header.includes(k) || k.includes(header));
             if (key) {
                const val = parseFloat(row.values[idx]);
-               const ideal = parseFloat(idealSize[key].avg);
+               const ideal = parseFloat(categoryIdeal[key].avg);
                if (!isNaN(val) && !isNaN(ideal)) {
                   totalDiff += Math.abs(val - ideal);
                   matchCount++;
@@ -737,57 +739,107 @@ function SearchContent() {
                            <section>
                               <h3 className="text-xs font-black tracking-widest text-neutral-400 mb-6 uppercase">Size Guide</h3>
 
-                              {/* Recommendation Banner */}
-                              {recommendedSize && userProfile?.userStats && (
-                                 <div className="bg-black text-white p-6 mb-6 flex items-start gap-4">
-                                    <div className="mt-1">
-                                       <CheckCircle2 size={16} />
-                                    </div>
-                                    <div>
-                                       <p className="font-bold text-lg mb-1">
-                                          추천 사이즈: <span className="underline decoration-2 underline-offset-4">{recommendedSize}</span>
-                                       </p>
-                                       <p className="text-sm text-neutral-400">
-                                          고객님의 체형({userProfile.userStats.height}cm/{userProfile.userStats.weight}kg)과 기존 구매 이력을 분석한 결과입니다.
-                                       </p>
-                                    </div>
-                                 </div>
-                              )}
-
-                              {/* AI Fit Prediction Card */}
-                              {(isFitAnalyzing || fitPrediction) && (
-                                 <div className="border border-neutral-200 p-6 mb-8 bg-neutral-50">
-                                    <div className="flex items-center gap-2 mb-4">
-                                       <Sparkles size={16} className="text-black" />
-                                       <h4 className="font-black text-sm uppercase tracking-wider">AI Fit Prediction</h4>
-                                    </div>
-
-                                    {isFitAnalyzing ? (
-                                       <div className="flex items-center gap-3 text-sm font-medium text-neutral-500">
-                                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
-                                          AI가 핏을 분석하고 있습니다...
+                              {/* Unified Size & Fit Analysis Card */}
+                              {(userProfile?.userStats || isFitAnalyzing || fitPrediction) && (
+                                 <div className="border border-neutral-200 mb-8 overflow-hidden">
+                                    {/* Header */}
+                                    <div className="bg-neutral-50 px-6 py-4 border-b border-neutral-200 flex items-center justify-between">
+                                       <div className="flex items-center gap-2">
+                                          <Sparkles size={14} className="text-black" />
+                                          <h4 className="font-bold text-xs uppercase tracking-wider">Size & Fit Analysis</h4>
                                        </div>
-                                    ) : (
-                                       <div className="space-y-4">
-                                          <p className="text-sm font-medium leading-relaxed text-neutral-800">
-                                             {fitPrediction}
-                                          </p>
+                                       {userProfile?.userStats && (
+                                          <div className="text-[10px] font-medium text-neutral-400">
+                                             {userProfile.userStats.height}cm / {userProfile.userStats.weight}kg
+                                          </div>
+                                       )}
+                                    </div>
 
-                                          {/* Ideal Size Display */}
-                                          {userProfile?.idealSize && (
-                                             <div className="pt-4 border-t border-neutral-200">
-                                                <p className="text-[10px] font-bold text-neutral-400 mb-2 uppercase tracking-wider">Your Ideal Measurements</p>
-                                                <div className="flex flex-wrap gap-2">
-                                                   {Object.entries(userProfile.idealSize).map(([key, val]: any) => (
-                                                      <span key={key} className="text-xs font-bold bg-white border border-neutral-200 px-2 py-1">
-                                                         {key}: {val.avg}
-                                                      </span>
+                                    <div className="p-6">
+                                       {/* 1. Recommended Size */}
+                                       <div className="mb-6">
+                                          <div className="flex items-baseline gap-2 mb-1">
+                                             <span className="text-xs font-bold text-neutral-400 uppercase">Recommended Size</span>
+                                             {recommendedSize ? (
+                                                <span className="text-xl font-black tracking-tight">{recommendedSize}</span>
+                                             ) : (
+                                                <span className="text-sm font-medium text-neutral-400">분석 불가</span>
+                                             )}
+                                          </div>
+                                          <p className="text-xs text-neutral-400 leading-relaxed">
+                                             {recommendedSize
+                                                ? '고객님의 신체 사이즈와 구매 이력을 바탕으로 가장 적합한 사이즈를 추천해 드립니다.'
+                                                : '해당 카테고리의 구매 이력이 부족하여 사이즈를 추천할 수 없습니다.'}
+                                          </p>
+                                       </div>
+
+                                       {/* 2. AI Fit Prediction */}
+                                       {(isFitAnalyzing || fitPrediction) && (
+                                          <div className="pt-6 border-t border-neutral-100">
+                                             {isFitAnalyzing ? (
+                                                <div className="flex items-center gap-3 text-sm font-medium text-neutral-500 py-2">
+                                                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                                                   AI가 핏을 분석하고 있습니다...
+                                                </div>
+                                             ) : (
+                                                <div className="space-y-4">
+                                                   {typeof fitPrediction === 'string' ? (
+                                                      <p className="text-sm text-neutral-800 leading-relaxed">{fitPrediction}</p>
+                                                   ) : (
+                                                      <div className="grid grid-cols-1 gap-4">
+                                                         {/* Positive */}
+                                                         <div className="bg-neutral-50 p-4 rounded-sm">
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                               <CheckCircle2 size={14} className="text-neutral-900" />
+                                                               <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-900">Positive</span>
+                                                            </div>
+                                                            <p className="text-xs text-neutral-600 leading-relaxed">
+                                                               {(fitPrediction as any)?.positive}
+                                                            </p>
+                                                         </div>
+                                                         {/* Concern */}
+                                                         <div className="bg-neutral-50 p-4 rounded-sm">
+                                                            <div className="flex items-center gap-2 mb-2">
+                                                               <AlertCircle size={14} className="text-neutral-900" />
+                                                               <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-900">Concern</span>
+                                                            </div>
+                                                            <p className="text-xs text-neutral-600 leading-relaxed">
+                                                               {(fitPrediction as any)?.concern}
+                                                            </p>
+                                                         </div>
+                                                      </div>
+                                                   )}
+                                                </div>
+                                             )}
+                                          </div>
+                                       )}
+
+                                       {/* 3. Ideal Measurements */}
+                                       {userProfile?.idealSize && data.basicInfo?.category1 && (
+                                          <div className="pt-6 mt-6 border-t border-neutral-100">
+                                             <div className="flex items-center justify-between mb-3">
+                                                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
+                                                   Your Ideal ({data.basicInfo.category1})
+                                                </span>
+                                             </div>
+
+                                             {userProfile.idealSize[data.basicInfo.category1] ? (
+                                                <div className="grid grid-cols-4 gap-2">
+                                                   {Object.entries(userProfile.idealSize[data.basicInfo.category1]).map(([key, val]: any) => (
+                                                      <div key={key} className="bg-white border border-neutral-100 p-2 text-center">
+                                                         <div className="text-[10px] text-neutral-400 mb-0.5">{key}</div>
+                                                         <div className="text-xs font-bold">{val.avg}</div>
+                                                      </div>
                                                    ))}
                                                 </div>
-                                             </div>
-                                          )}
-                                       </div>
-                                    )}
+                                             ) : (
+                                                <p className="text-xs text-neutral-400">
+                                                   데이터가 없습니다.
+                                                </p>
+                                             )}
+                                          </div>
+                                       )}
+                                    </div>
                                  </div>
                               )}
 

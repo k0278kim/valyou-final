@@ -285,7 +285,7 @@ export async function GET(request: Request) {
         sizeTable,
         reviews,
         social: socialData,
-        summary // 추가
+        summary, // 추가
       }
     });
 

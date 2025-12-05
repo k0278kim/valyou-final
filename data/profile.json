@@ -72,7 +72,9 @@
       },
       "addedAt": "2025-12-05T03:25:17.253Z",
       "fitStatus": "SMALL",
-      "selectedSize": "L"
+      "selectedSize": "L",
+      "category1": "아우터",
+      "category2": "겨울 기타 코트"
     },
     {
       "goodsNo": "2848709",
@@ -119,7 +121,9 @@
       },
       "addedAt": "2025-12-05T03:25:33.050Z",
       "fitStatus": "GOOD",
-      "selectedSize": "L"
+      "selectedSize": "L",
+      "category1": "아우터",
+      "category2": "겨울 기타 코트"
     },
     {
       "goodsNo": "957401",
@@ -188,6 +192,47 @@
       "addedAt": "2025-12-05T05:42:47.275Z",
       "fitStatus": "GOOD",
       "selectedSize": "M"
+    },
+    {
+      "goodsNo": "1701482",
+      "title": "COMME V NECK SWEATER CREAM",
+      "brand": "꼼파뇨",
+      "imageUrl": "https://image.msscdn.net/images/goods_img/20201125/1701482/1701482_1_500.jpg",
+      "sizeTable": {
+        "headers": [
+          "총장",
+          "어깨너비",
+          "가슴단면",
+          "소매길이"
+        ],
+        "rows": [
+          {
+            "name": "M",
+            "values": [
+              68,
+              60,
+              62,
+              50
+            ]
+          },
+          {
+            "name": "L",
+            "values": [
+              73,
+              68,
+              70,
+              53
+            ]
+          }
+        ],
+        "imageUrl": ""
+      },
+      "category1": "상의",
+      "category2": "니트/스웨터",
+      "link": "https://www.musinsa.com/app/goods/1701482",
+      "addedAt": "2025-12-05T06:18:41.700Z",
+      "fitStatus": "GOOD",
+      "selectedSize": "L"
     }
   ],
   "userStats": {

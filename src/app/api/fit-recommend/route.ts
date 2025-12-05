@@ -20,17 +20,28 @@ export async function POST(request: Request) {
         Recommended Size: ${recommendedSize}
         Size Table: ${JSON.stringify(sizeTable)}
 
-        Based on the user's body stats and the product's size table (especially for the recommended size), predict the fit (e.g., Overfit, Regular fit, Slim fit, etc.) and explain how it will feel in 1 sentence in Korean.
-        Focus on length and width.
-        Example output: "기장감은 적당하지만 품이 넉넉하여 세미 오버핏으로 편안하게 연출될 것 같아요."
-        Keep it concise and helpful.
+        Based on the user's body stats and the product's size table (especially for the recommended size), predict the fit.
+        
+        RETURN JSON FORMAT ONLY:
+        {
+            "positive": "One sentence explaining the good points of the fit (e.g., length is perfect, shoulders fit well). in Korean",
+            "concern": "One sentence explaining potential concerns (e.g., sleeves might be slightly long, chest might be tight). If none, say '특별한 우려 사항은 없습니다.' in Korean"
+        }
         `;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
+        const text = response.text().replace(/```json/g, '').replace(/```/g, '').trim();
 
-        return NextResponse.json({ success: true, fitPrediction: text.trim() });
+        let prediction = { positive: '', concern: '' };
+        try {
+            prediction = JSON.parse(text);
+        } catch (e) {
+            console.error('Failed to parse JSON:', text);
+            prediction = { positive: text, concern: '' }; // Fallback
+        }
+
+        return NextResponse.json({ success: true, fitPrediction: prediction });
     } catch (error) {
         console.error('Fit prediction error:', error);
         return NextResponse.json({ error: 'Failed to generate fit prediction' }, { status: 500 });
