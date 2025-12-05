@@ -123,12 +123,18 @@ export async function GET(request: Request) {
     // 품절 여부
     const isSoldOut = dData.isOutOfStock || dData.isSoldOut || false;
 
+    // Category extraction
+    const category1 = dData.category?.categoryDepth1Title || '기타';
+    const category2 = dData.category?.categoryDepth2Title || '';
+
     const basicInfo = {
       goodsNo,
       title: dData.goodsNm || '',
       brand: dData.brandInfo?.brandName || dData.brand || '',
       brandId: dData.brandInfo?.brand || '',
       styleNo: dData.styleNo || '',
+      category1, // Major Category
+      category2, // Sub Category
       imageUrl: dData.thumbnailImageUrl ? (dData.thumbnailImageUrl.startsWith('http') ? dData.thumbnailImageUrl : `https://image.msscdn.net${dData.thumbnailImageUrl}`) : '',
       price: originalPrice,
       salePrice: finalPrice,
@@ -144,15 +150,25 @@ export async function GET(request: Request) {
     };
 
     // 4. 리뷰 & 사이즈
-    const reviews = reviewList.map((item: any) => ({
-      reviewNo: item.no,
-      userName: item.userProfileInfo?.userNickName || '익명',
-      userImage: item.userImageFile ? `https://image.msscdn.net${item.userImageFile}` : '',
-      reviewImage: item.images?.[0]?.imageUrl ? `https://image.msscdn.net${item.images[0].imageUrl}` : '',
-      content: item.content,
-      rating: item.grade,
-      date: item.createDate ? item.createDate.split('T')[0] : ''
-    }));
+    const reviews = reviewList.map((item: any) => {
+      const profile = item.userProfileInfo || {};
+      return {
+        reviewNo: item.no,
+        userName: profile.userNickName || '익명',
+        userImage: item.userImageFile ? `https://image.msscdn.net${item.userImageFile}` : '',
+        reviewImage: item.images && item.images.length > 0 ? `https://image.msscdn.net${item.images[0].imageUrl}` : '',
+        content: item.content,
+        rating: item.grade,
+        date: item.createDate ? item.createDate.split('T')[0] : '',
+        profile: profile.bodySize || '', // 예: 170cm / 60kg (Legacy fallback)
+        size: item.goodsOptionName || '', // 예: L (Legacy fallback)
+        // New Fields
+        option: item.goodsOption || '',
+        userHeight: profile.userHeight || null,
+        userWeight: profile.userWeight || null,
+        userSex: profile.reviewSex || ''
+      };
+    });
 
     const sizeTable = { headers: [] as string[], rows: [] as any[], imageUrl: '' };
     if (sizeList.length > 0) {

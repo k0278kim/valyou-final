@@ -9,9 +9,10 @@ async function check(id) {
         });
         const json = await res.json();
         const data = json.data;
-        if (data && data.goodsMaterial) {
+        if (data) {
             console.log(`--- ID: ${id} ---`);
-            console.log(JSON.stringify(data.goodsMaterial, null, 2));
+            console.log('Category:', JSON.stringify(data.category, null, 2));
+            console.log('Goods Name:', data.goodsNm);
         }
     } catch (e) {
         console.error(`Error for ${id}:`, e.message);

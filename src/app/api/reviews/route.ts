@@ -37,8 +37,13 @@ export async function GET(request: Request) {
             content: item.content,
             rating: item.grade,
             date: item.createDate ? item.createDate.split('T')[0] : '',
-            profile: item.userProfileInfo?.bodySize || '', // 예: 170cm / 60kg
-            size: item.goodsOptionName || '' // 예: L
+            profile: item.userProfileInfo?.bodySize || '', // 예: 170cm / 60kg (Legacy fallback)
+            size: item.goodsOptionName || '', // 예: L (Legacy fallback)
+            // New Fields
+            option: item.goodsOption || '',
+            userHeight: item.userProfileInfo?.userHeight || null,
+            userWeight: item.userProfileInfo?.userWeight || null,
+            userSex: item.userProfileInfo?.reviewSex || ''
         }));
 
         return NextResponse.json({
