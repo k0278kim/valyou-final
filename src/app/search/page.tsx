@@ -53,12 +53,19 @@ function SearchContent() {
 
    // Load recent items on mount
    useEffect(() => {
-      const saved = localStorage.getItem('valyou_recent_items');
+      const saved = localStorage.getItem('closai_recent_items');
       if (saved) {
          try {
             setRecentItems(JSON.parse(saved));
          } catch (e) {
             console.error('Failed to parse recent items', e);
+         }
+      } else {
+         // Migration for recent items
+         const oldSaved = localStorage.getItem('valyou_recent_items');
+         if (oldSaved) {
+            localStorage.setItem('closai_recent_items', oldSaved);
+            setRecentItems(JSON.parse(oldSaved));
          }
       }
    }, []);
@@ -77,7 +84,7 @@ function SearchContent() {
          setRecentItems(prev => {
             const filtered = prev.filter(item => item.goodsNo !== newItem.goodsNo);
             const updated = [newItem, ...filtered].slice(0, 10);
-            localStorage.setItem('valyou_recent_items', JSON.stringify(updated));
+            localStorage.setItem('closai_recent_items', JSON.stringify(updated));
             return updated;
          });
       }
@@ -87,8 +94,8 @@ function SearchContent() {
       loadUserProfile();
 
       const handleStorageChange = () => loadUserProfile();
-      window.addEventListener('valyou_storage_change', handleStorageChange);
-      return () => window.removeEventListener('valyou_storage_change', handleStorageChange);
+      window.addEventListener('closai_storage_change', handleStorageChange);
+      return () => window.removeEventListener('closai_storage_change', handleStorageChange);
    }, []);
 
    const loadUserProfile = () => {
@@ -385,7 +392,7 @@ function SearchContent() {
       <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
          <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-50 flex items-center justify-between px-8 border-b border-neutral-100">
             <Link href="/search" className="text-2xl font-black tracking-tighter hover:opacity-50 transition-opacity">
-               VALYOU
+               ClosAI
             </Link>
             <nav className="flex gap-8">
                <Link href="/search" className="text-sm font-bold text-black border-b-2 border-black pb-1">SEARCH</Link>
@@ -425,7 +432,7 @@ function SearchContent() {
          {/* Minimal Header */}
          <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-50 flex items-center justify-between px-8 border-b border-neutral-100">
             <Link href="/search" className="text-2xl font-black tracking-tighter hover:opacity-50 transition-opacity">
-               VALYOU
+               ClosAI
             </Link>
             <nav className="flex gap-8">
                <Link href="/search" className="text-sm font-bold text-black border-b-2 border-black pb-1">SEARCH</Link>
