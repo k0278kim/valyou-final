@@ -545,18 +545,7 @@ function SearchContent() {
                         {showHeatmap ? 'HIDE HEATMAP' : 'FIT HEATMAP'}
                      </button>
 
-                     {/* Heatmap Legend */}
-                     {showHeatmap && heatmapPoints.length > 0 && (
-                        <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md text-white px-3 py-2 rounded-lg text-[10px] font-medium animate-fade-in z-20">
-                           <div className="flex items-center gap-2 mb-1">
-                              <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
-                              <span>Tight / Issue Area</span>
-                           </div>
-                           <div className="text-neutral-400 text-[9px]">
-                              Based on AI review analysis
-                           </div>
-                        </div>
-                     )}
+
                   </div>
 
                   {/* Product Info */}
