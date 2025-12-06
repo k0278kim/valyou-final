@@ -28,6 +28,7 @@ export async function POST(request: Request) {
             - intensity: A score from 0-100 indicating how severe or frequent the issue is.
             
             Only include issues with significant mention.
+            IMPORTANT: Output 'area' and 'issue' in Korean.
             
             Reviews:
             ${reviewsText}
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
             Output JSON format:
             {
                 "issues": [
-                    { "area": "shoulders", "issue": "tight", "intensity": 80 },
+                    { "area": "어깨", "issue": "낌", "intensity": 80 },
                     ...
                 ]
             }
@@ -76,10 +77,15 @@ export async function POST(request: Request) {
             Return the center coordinates (x, y) as percentages (0-100) from the top-left corner.
             Also suggest a radius (0-100) relative to the image size for the heatmap blob.
             
+            IMPORTANT: The 'label' should be a specific and descriptive Korean explanation of WHY this is an issue.
+            Instead of just "어깨 낌", say "팔을 들 때 어깨가 낌" or "어깨 라인이 좁게 나옴".
+            Instead of just "주름", say "허리 라인이 울어서 주름짐" or "앉을 때 배 부분이 접힘".
+            Make it sound like a helpful tip from a friend.
+            
             Output JSON format:
             {
                 "points": [
-                    { "x": 50, "y": 20, "radius": 15, "intensity": 80, "label": "Tight Shoulders" },
+                    { "x": 50, "y": 20, "radius": 15, "intensity": 80, "label": "팔을 들 때 어깨가 낌" },
                     ...
                 ]
             }

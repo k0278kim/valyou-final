@@ -435,18 +435,31 @@ function SearchContent() {
                      {showHeatmap && (
                         <div className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-100 z-10">
                            {heatmapPoints.map((point, idx) => (
-                              <div
-                                 key={idx}
-                                 className="absolute rounded-full blur-xl"
-                                 style={{
-                                    left: `${point.x}%`,
-                                    top: `${point.y}%`,
-                                    width: `${point.radius * 2}%`,
-                                    height: `${point.radius * 2}%`,
-                                    transform: 'translate(-50%, -50%)',
-                                    background: `radial-gradient(circle, rgba(255, 0, 0, ${point.intensity / 100 * 0.6}) 0%, rgba(255, 0, 0, 0) 70%)`,
-                                 }}
-                              />
+                              <div key={idx}>
+                                 {/* Heatmap Blob */}
+                                 <div
+                                    className="absolute rounded-full blur-xl"
+                                    style={{
+                                       left: `${point.x}%`,
+                                       top: `${point.y}%`,
+                                       width: `${point.radius * 2}%`,
+                                       height: `${point.radius * 2}%`,
+                                       transform: 'translate(-50%, -50%)',
+                                       background: `radial-gradient(circle, rgba(255, 0, 0, ${point.intensity / 100 * 0.6}) 0%, rgba(255, 0, 0, 0) 70%)`,
+                                    }}
+                                 />
+                                 {/* Label */}
+                                 <div
+                                    className="absolute px-2 py-1 bg-black/70 backdrop-blur-sm rounded text-[10px] font-bold text-white whitespace-nowrap z-20"
+                                    style={{
+                                       left: `${point.x}%`,
+                                       top: `${point.y}%`,
+                                       transform: 'translate(-50%, -50%)',
+                                    }}
+                                 >
+                                    {point.label}
+                                 </div>
+                              </div>
                            ))}
                         </div>
                      )}
