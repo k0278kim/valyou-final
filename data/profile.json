@@ -1,0 +1,274 @@
+{
+  "items": [
+    {
+      "goodsNo": "2863075",
+      "title": "유니섹스 발마칸 더플 숏 코트 (BLACK)",
+      "brand": "트릴리온",
+      "imageUrl": "https://image.msscdn.net/images/goods_img/20221014/2863075/2863075_1_500.jpg",
+      "sizeTable": {
+        "headers": [
+          "총장",
+          "어깨너비",
+          "가슴단면",
+          "소매길이"
+        ],
+        "rows": [
+          {
+            "name": "S",
+            "values": [
+              65,
+              55,
+              65,
+              53
+            ]
+          },
+          {
+            "name": "M",
+            "values": [
+              73,
+              55,
+              62,
+              59
+            ]
+          },
+          {
+            "name": "L",
+            "values": [
+              76,
+              57,
+              65,
+              62
+            ]
+          },
+          {
+            "name": "S (누빔)",
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "M (누빔)",
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ]
+          },
+          {
+            "name": "L (누빔)",
+            "values": [
+              0,
+              0,
+              0,
+              0
+            ]
+          }
+        ],
+        "imageUrl": ""
+      },
+      "addedAt": "2025-12-05T03:25:17.253Z",
+      "fitStatus": "SMALL",
+      "selectedSize": "L",
+      "category1": "아우터",
+      "category2": "겨울 기타 코트"
+    },
+    {
+      "goodsNo": "2848709",
+      "title": "3M 신슐레이트 보아 플리스 콘보이 더플 코트 아이보리",
+      "brand": "파르티멘토",
+      "imageUrl": "https://image.msscdn.net/images/goods_img/20221007/2848709/2848709_17278373432269_500.jpg",
+      "sizeTable": {
+        "headers": [
+          "총장",
+          "어깨너비",
+          "가슴단면",
+          "소매길이"
+        ],
+        "rows": [
+          {
+            "name": "S",
+            "values": [
+              73,
+              55,
+              63,
+              59
+            ]
+          },
+          {
+            "name": "M",
+            "values": [
+              75,
+              56,
+              65,
+              60
+            ]
+          },
+          {
+            "name": "L",
+            "values": [
+              77,
+              57,
+              67,
+              61
+            ]
+          }
+        ],
+        "imageUrl": ""
+      },
+      "addedAt": "2025-12-05T03:25:33.050Z",
+      "fitStatus": "GOOD",
+      "selectedSize": "L",
+      "category1": "아우터",
+      "category2": "겨울 기타 코트"
+    },
+    {
+      "goodsNo": "957401",
+      "title": "P[1003]롱 와이드 코튼팬츠(베이지)",
+      "brand": "퍼블릭아이콘",
+      "imageUrl": "https://image.msscdn.net/images/goods_img/20190218/957401/957401_1_500.jpg",
+      "sizeTable": {
+        "headers": [
+          "총장",
+          "허리단면",
+          "엉덩이단면",
+          "허벅지단면",
+          "밑위",
+          "밑단단면"
+        ],
+        "rows": [
+          {
+            "name": "XS",
+            "values": [
+              102,
+              35.5,
+              46.5,
+              30,
+              27,
+              21.5
+            ]
+          },
+          {
+            "name": "S",
+            "values": [
+              104,
+              38,
+              48,
+              31,
+              28,
+              23
+            ]
+          },
+          {
+            "name": "M",
+            "values": [
+              105,
+              40.5,
+              50,
+              32,
+              29,
+              23.5
+            ]
+          },
+          {
+            "name": "L",
+            "values": [
+              106,
+              43,
+              52,
+              33,
+              30,
+              24
+            ]
+          }
+        ],
+        "imageUrl": ""
+      },
+      "category1": "바지",
+      "category2": "코튼 팬츠",
+      "addedAt": "2025-12-05T05:42:47.275Z",
+      "fitStatus": "GOOD",
+      "selectedSize": "L"
+    },
+    {
+      "goodsNo": "1701482",
+      "title": "COMME V NECK SWEATER CREAM",
+      "brand": "꼼파뇨",
+      "imageUrl": "https://image.msscdn.net/images/goods_img/20201125/1701482/1701482_1_500.jpg",
+      "sizeTable": {
+        "headers": [
+          "총장",
+          "어깨너비",
+          "가슴단면",
+          "소매길이"
+        ],
+        "rows": [
+          {
+            "name": "M",
+            "values": [
+              68,
+              60,
+              62,
+              50
+            ]
+          },
+          {
+            "name": "L",
+            "values": [
+              73,
+              68,
+              70,
+              53
+            ]
+          }
+        ],
+        "imageUrl": ""
+      },
+      "category1": "상의",
+      "category2": "니트/스웨터",
+      "link": "https://www.musinsa.com/app/goods/1701482",
+      "addedAt": "2025-12-05T06:18:41.700Z",
+      "fitStatus": "GOOD",
+      "selectedSize": "L"
+    },
+    {
+      "goodsNo": "5793612",
+      "title": "[SOUL Tricycle] T-shirt (White)",
+      "brand": "브라운 아이드 소울",
+      "imageUrl": "https://image.msscdn.net/images/goods_img/20251201/5793612/5793612_17646597297436_500.jpg",
+      "sizeTable": {
+        "headers": [
+          "총장",
+          "어깨너비",
+          "가슴단면",
+          "소매길이"
+        ],
+        "rows": [
+          {
+            "name": "NONE",
+            "values": [
+              75,
+              49,
+              56.5,
+              16
+            ]
+          }
+        ],
+        "imageUrl": ""
+      },
+      "category1": "상의",
+      "category2": "반소매 티셔츠",
+      "link": "https://www.musinsa.com/app/goods/5793612",
+      "addedAt": "2025-12-05T07:01:58.600Z",
+      "fitStatus": "GOOD",
+      "selectedSize": "NONE"
+    }
+  ],
+  "userStats": {
+    "height": "174",
+    "weight": "80"
+  }
+}
