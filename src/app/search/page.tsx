@@ -9,6 +9,7 @@ import {
    ArrowLeft, ExternalLink, ScanEye, CheckCircle2, Ruler, Shirt, AlertCircle, TrendingUp, Sparkles,
    Scale, ArrowUpDown, Info
 } from 'lucide-react';
+import { storage } from '../../utils/storage';
 
 export default function SearchPage() {
    return (
@@ -83,19 +84,17 @@ function SearchContent() {
    }, [data]);
 
    useEffect(() => {
-      fetchUserProfile();
+      loadUserProfile();
+
+      const handleStorageChange = () => loadUserProfile();
+      window.addEventListener('valyou_storage_change', handleStorageChange);
+      return () => window.removeEventListener('valyou_storage_change', handleStorageChange);
    }, []);
 
-   const fetchUserProfile = async () => {
-      try {
-         const res = await fetch('/api/profile');
-         const json = await res.json();
-         if (json.success) {
-            setUserProfile(json.data);
-         }
-      } catch (err) {
-         console.error('Failed to fetch user profile:', err);
-      }
+   const loadUserProfile = () => {
+      const data = storage.get();
+      const idealSize = storage.calculateIdealSize(data.items);
+      setUserProfile({ ...data, idealSize });
    };
 
    // Calculate recommended size when data or userProfile changes
