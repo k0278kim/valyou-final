@@ -20,15 +20,26 @@ export interface ProfileData {
     };
 }
 
-const STORAGE_KEY = 'valyou_profile_data';
+const STORAGE_KEY = 'closai_profile_data';
+const OLD_STORAGE_KEY = 'valyou_profile_data';
 
 export const storage = {
     get: (): ProfileData => {
         if (typeof window === 'undefined') return { items: [], userStats: { height: '', weight: '' } };
 
         try {
+            // Migration Logic
             const data = localStorage.getItem(STORAGE_KEY);
-            if (!data) return { items: [], userStats: { height: '', weight: '' } };
+            if (!data) {
+                // Check for old data
+                const oldData = localStorage.getItem(OLD_STORAGE_KEY);
+                if (oldData) {
+                    localStorage.setItem(STORAGE_KEY, oldData);
+                    // Optional: localStorage.removeItem(OLD_STORAGE_KEY); // Keep for safety for now
+                    return JSON.parse(oldData);
+                }
+                return { items: [], userStats: { height: '', weight: '' } };
+            }
             return JSON.parse(data);
         } catch (e) {
             return { items: [], userStats: { height: '', weight: '' } };
@@ -38,7 +49,7 @@ export const storage = {
     save: (data: ProfileData) => {
         if (typeof window === 'undefined') return;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        window.dispatchEvent(new Event('valyou_storage_change'));
+        window.dispatchEvent(new Event('closai_storage_change'));
     },
 
     addItem: (item: Omit<ProfileItem, 'addedAt' | 'fitStatus' | 'selectedSize'>) => {

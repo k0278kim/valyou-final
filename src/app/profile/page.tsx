@@ -16,8 +16,8 @@ export default function ProfilePage() {
         loadData();
 
         const handleStorageChange = () => loadData();
-        window.addEventListener('valyou_storage_change', handleStorageChange);
-        return () => window.removeEventListener('valyou_storage_change', handleStorageChange);
+        window.addEventListener('closai_storage_change', handleStorageChange);
+        return () => window.removeEventListener('closai_storage_change', handleStorageChange);
     }, []);
 
     useEffect(() => {
@@ -121,7 +121,7 @@ export default function ProfilePage() {
             {/* Minimal Header */}
             <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-50 flex items-center justify-between px-8 border-b border-neutral-100">
                 <Link href="/search" className="text-2xl font-black tracking-tighter hover:opacity-50 transition-opacity">
-                    VALYOU
+                    ClosAI
                 </Link>
                 <nav className="flex gap-8">
                     <Link href="/search" className="text-sm font-medium text-neutral-400 hover:text-black transition-colors">SEARCH</Link>
