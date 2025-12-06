@@ -77,15 +77,23 @@ export async function POST(request: Request) {
             Return the center coordinates (x, y) as percentages (0-100) from the top-left corner.
             Also suggest a radius (0-100) relative to the image size for the heatmap blob.
             
-            IMPORTANT: The 'label' should be a specific and descriptive Korean explanation of WHY this is an issue.
-            Instead of just "어깨 낌", say "팔을 들 때 어깨가 낌" or "어깨 라인이 좁게 나옴".
-            Instead of just "주름", say "허리 라인이 울어서 주름짐" or "앉을 때 배 부분이 접힘".
-            Make it sound like a helpful tip from a friend.
+            IMPORTANT: Provide structured information for the tooltip.
+            - category: One of ['weight', 'texture', 'fit', 'length', 'wrinkle', 'other'].
+            - keyword: A very short, catchy Korean phrase (2-3 words) suitable for an icon label (e.g., "무거움 주의", "마찰 보풀", "박스 핏", "기장 짧음").
+            - description: A specific and descriptive Korean explanation of WHY this is an issue. Make it sound like a helpful tip from a friend.
             
             Output JSON format:
             {
                 "points": [
-                    { "x": 50, "y": 20, "radius": 15, "intensity": 80, "label": "팔을 들 때 어깨가 낌" },
+                    { 
+                        "x": 50, 
+                        "y": 20, 
+                        "radius": 15, 
+                        "intensity": 80, 
+                        "category": "fit",
+                        "keyword": "어깨 낌 주의",
+                        "description": "팔을 들 때 어깨 라인이 타이트하게 느껴질 수 있어요."
+                    },
                     ...
                 ]
             }

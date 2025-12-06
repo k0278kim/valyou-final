@@ -6,7 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import {
    Search, Youtube, Instagram, BookOpen,
-   ArrowLeft, ExternalLink, ScanEye, CheckCircle2, Ruler, Shirt, AlertCircle, TrendingUp, Sparkles
+   ArrowLeft, ExternalLink, ScanEye, CheckCircle2, Ruler, Shirt, AlertCircle, TrendingUp, Sparkles,
+   Scale, ArrowUpDown, Info
 } from 'lucide-react';
 
 export default function SearchPage() {
@@ -44,6 +45,7 @@ function SearchContent() {
    const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
    const [isHeatmapLoading, setIsHeatmapLoading] = useState(false);
    const [showHeatmap, setShowHeatmap] = useState(false);
+   const [expandedPointId, setExpandedPointId] = useState<number | null>(null);
 
    // Recent Items State
    const [recentItems, setRecentItems] = useState<any[]>([]);
@@ -325,6 +327,17 @@ function SearchContent() {
       }
    }, [showHeatmap]);
 
+   const getCategoryIcon = (category: string) => {
+      switch (category) {
+         case 'weight': return Scale;
+         case 'texture': return Shirt;
+         case 'fit': return Ruler;
+         case 'length': return ArrowUpDown;
+         case 'wrinkle': return AlertCircle;
+         default: return Info;
+      }
+   };
+
    const filterSocial = (items: any[]) => {
       if (!data) return { exact: [], brand: [] };
       const exact = items.filter((i: any) => i.isExactMatch);
@@ -434,33 +447,85 @@ function SearchContent() {
                      {/* Heatmap Overlay */}
                      {showHeatmap && (
                         <div className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-100 z-10">
-                           {heatmapPoints.map((point, idx) => (
-                              <div key={idx}>
-                                 {/* Heatmap Blob */}
-                                 <div
-                                    className="absolute rounded-full blur-xl"
-                                    style={{
-                                       left: `${point.x}%`,
-                                       top: `${point.y}%`,
-                                       width: `${point.radius * 2}%`,
-                                       height: `${point.radius * 2}%`,
-                                       transform: 'translate(-50%, -50%)',
-                                       background: `radial-gradient(circle, rgba(255, 0, 0, ${point.intensity / 100 * 0.6}) 0%, rgba(255, 0, 0, 0) 70%)`,
-                                    }}
-                                 />
-                                 {/* Label */}
-                                 <div
-                                    className="absolute px-2 py-1 bg-black/70 backdrop-blur-sm rounded text-[10px] font-bold text-white whitespace-nowrap z-20"
-                                    style={{
-                                       left: `${point.x}%`,
-                                       top: `${point.y}%`,
-                                       transform: 'translate(-50%, -50%)',
-                                    }}
-                                 >
-                                    {point.label}
+                           {heatmapPoints.map((point, idx) => {
+                              const isExpanded = expandedPointId === idx;
+                              const Icon = getCategoryIcon(point.category);
+
+                              return (
+                                 <div key={idx}>
+                                    {/* Heatmap Blob */}
+                                    <div
+                                       className="absolute rounded-full blur-xl"
+                                       style={{
+                                          left: `${point.x}%`,
+                                          top: `${point.y}%`,
+                                          width: `${point.radius * 2}%`,
+                                          height: `${point.radius * 2}%`,
+                                          transform: 'translate(-50%, -50%)',
+                                          background: `radial-gradient(circle, rgba(255, 0, 0, ${point.intensity / 100 * 0.6}) 0%, rgba(255, 0, 0, 0) 70%)`,
+                                       }}
+                                    />
+
+                                    {/* Interactive Tooltip */}
+                                    <div
+                                       className={`absolute pointer-events-auto cursor-pointer ${isExpanded ? 'z-50' : 'z-30'
+                                          }`}
+                                       style={{
+                                          left: `${point.x}%`,
+                                          top: `${point.y}%`,
+                                       }}
+                                       onClick={(e) => {
+                                          e.stopPropagation();
+                                          setExpandedPointId(isExpanded ? null : idx);
+                                       }}
+                                    >
+                                       <div
+                                          className={`absolute transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] ${isExpanded ? 'z-50 scale-100' : 'z-30 hover:scale-105'
+                                             }`}
+                                          style={{
+                                             transformOrigin: `${point.x > 50 ? 'right' : 'left'} ${point.y > 50 ? 'bottom' : 'top'}`,
+                                             [point.x > 50 ? 'right' : 'left']: '0',
+                                             [point.y > 50 ? 'bottom' : 'top']: '0',
+                                          }}
+                                       >
+                                          <div className={`flex flex-col gap-2 shadow-2xl overflow-hidden transition-all duration-300 ${isExpanded
+                                             ? 'bg-black text-white p-4 rounded-2xl min-w-[200px] border border-black'
+                                             : 'bg-white text-black px-3 py-2 rounded-2xl items-center flex-row border border-neutral-200'
+                                             }`}>
+                                             {/* Header: Icon + Keyword + Toggle Indicator */}
+                                             <div className="flex items-center justify-between gap-3 w-full">
+                                                <div className="flex items-center gap-2">
+                                                   <div className={`p-1 rounded-full ${isExpanded ? 'bg-white/10' : 'bg-neutral-100'}`}>
+                                                      <Icon size={12} strokeWidth={2.5} />
+                                                   </div>
+                                                   <span className={`text-xs font-bold tracking-tight whitespace-nowrap ${isExpanded ? 'text-white' : 'text-black'}`}>
+                                                      {point.keyword || point.label}
+                                                   </span>
+                                                </div>
+
+                                                {/* Toggle Icon */}
+                                                <div className={`transition-transform duration-300 ${isExpanded ? 'rotate-45' : 'rotate-0'}`}>
+                                                   <div className={`w-4 h-4 flex items-center justify-center rounded-full ${isExpanded ? 'bg-white/20' : 'bg-black text-white'}`}>
+                                                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                                         <line x1="12" y1="5" x2="12" y2="19"></line>
+                                                         <line x1="5" y1="12" x2="19" y2="12"></line>
+                                                      </svg>
+                                                   </div>
+                                                </div>
+                                             </div>
+
+                                             {/* Expanded Description */}
+                                             {isExpanded && (
+                                                <div className="text-[11px] font-medium text-neutral-300 leading-relaxed animate-fade-in border-t border-white/10 pt-2 mt-1">
+                                                   {point.description}
+                                                </div>
+                                             )}
+                                          </div>
+                                       </div>
+                                    </div>
                                  </div>
-                              </div>
-                           ))}
+                              );
+                           })}
                         </div>
                      )}
 
