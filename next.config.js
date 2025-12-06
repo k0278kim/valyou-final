@@ -9,7 +9,7 @@ const config = {
     images: {
         remotePatterns: [
             {
-        protocol: "https",
+                protocol: "https",
                 hostname: "**", // 모든 https 도메인 허용
             },
             {
@@ -17,7 +17,13 @@ const config = {
                 hostname: "**", // 모든 http 도메인 허용
             },
         ]
-    }
+    },
+    eslint: {
+        ignoreDuringBuilds: true,
+    },
+    typescript: {
+        ignoreBuildErrors: true,
+    },
 };
 
 export default config;

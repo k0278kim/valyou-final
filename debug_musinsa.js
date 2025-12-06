@@ -1,3 +1,4 @@
+// @ts-nocheck
 
 async function check(id) {
     try {

@@ -239,8 +239,8 @@ export async function GET(request: Request) {
         }
 
         const results = await Promise.all(requests);
-        const yJson = await results[0].json();
-        const iJson = await results[1].json();
+        const yJson = results[0] ? await results[0].json() : {};
+        const iJson = results[1] ? await results[1].json() : {};
         const nJson = (N_ID && results[2]) ? await results[2].json() : { items: [] };
 
         console.log(`📊 검색 결과: 유튜브(${yJson.items?.length || 0}), 인스타(${iJson.items?.length || 0}), 블로그(${nJson.items?.length || 0})`);
