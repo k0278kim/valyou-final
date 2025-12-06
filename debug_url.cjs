@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Node 18+ has global fetch
 
 // User provided cookies

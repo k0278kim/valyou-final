@@ -1,3 +1,4 @@
+// @ts-nocheck
 // const fetch = require('node-fetch'); // Native fetch in Node 18+
 
 async function debugMusinsaReviews(goodsNo) {

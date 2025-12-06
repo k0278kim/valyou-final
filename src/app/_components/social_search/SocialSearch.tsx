@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, Instagram, Youtube, Search } from 'lucide-react'; 
+import { ExternalLink, Instagram, Youtube, Search } from 'lucide-react';
 // lucide-react가 없다면 npm install lucide-react, 혹은 텍스트로 대체 가능
 
 interface Props {
@@ -22,15 +22,15 @@ export default function SocialSearch({ brand, title }: Props) {
     query = query.replace(/\(.*?\)/g, '');
 
     // - 사이즈 & 후기 | 무신사 같은 꼬리말 제거
-    query = query.split('-')[0];
-    query = query.split('|')[0];
+    query = query.split('-')[0] || query;
+    query = query.split('|')[0] || query;
 
     // 앞뒤 공백 제거 및 브랜드명과 합치기 (중복 방지)
     const cleanTitle = query.trim();
-    
+
     // 브랜드명이 제목에 이미 포함되어 있으면 제목만, 아니면 브랜드+제목
     if (cleanTitle.includes(brand)) {
-        return cleanTitle;
+      return cleanTitle;
     }
     return `${brand} ${cleanTitle}`;
   };
@@ -39,10 +39,10 @@ export default function SocialSearch({ brand, title }: Props) {
 
   // 각 플랫폼별 검색 URL 생성
   const youtubeUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(query + ' 후기')}`;
-  
+
   // 인스타그램은 구글을 통해 검색하는 게 가장 정확함 (site:instagram.com)
   const instagramUrl = `https://www.google.com/search?q=${encodeURIComponent('site:instagram.com ' + query)}`;
-  
+
   // 네이버 블로그/카페 검색
   const naverUrl = `https://search.naver.com/search.naver?where=view&sm=tab_jum&query=${encodeURIComponent(query)}`;
 
@@ -60,21 +60,21 @@ export default function SocialSearch({ brand, title }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {/* 유튜브 */}
-        <a 
-          href={youtubeUrl} 
-          target="_blank" 
+        <a
+          href={youtubeUrl}
+          target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 p-4 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition border border-red-100 font-bold"
         >
           {/* 아이콘이 없다면 텍스트로 대체하세요 */}
-          <Youtube size={20} /> 
+          <Youtube size={20} />
           유튜브 영상 찾기
         </a>
 
         {/* 인스타그램 */}
-        <a 
-          href={instagramUrl} 
-          target="_blank" 
+        <a
+          href={instagramUrl}
+          target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 p-4 rounded-xl bg-pink-50 text-pink-600 hover:bg-pink-100 transition border border-pink-100 font-bold"
         >
@@ -83,9 +83,9 @@ export default function SocialSearch({ brand, title }: Props) {
         </a>
 
         {/* 네이버 */}
-        <a 
-          href={naverUrl} 
-          target="_blank" 
+        <a
+          href={naverUrl}
+          target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 p-4 rounded-xl bg-green-50 text-green-600 hover:bg-green-100 transition border border-green-100 font-bold"
         >
@@ -94,9 +94,9 @@ export default function SocialSearch({ brand, title }: Props) {
         </a>
 
         {/* 구글 */}
-        <a 
-          href={googleUrl} 
-          target="_blank" 
+        <a
+          href={googleUrl}
+          target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 p-4 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition border border-blue-100 font-bold"
         >
