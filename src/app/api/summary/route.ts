@@ -27,15 +27,35 @@ export async function POST(request: Request) {
                         1. 장점 (3문장 내외)
                         2. 단점 (3문장 내외, 없으면 "특별한 단점 없음"이라고 적어주세요)
                         3. 핏/스타일/사이즈 팁 (3문장 내외)
+                        4. 구매 만족도 점수 (0~100점 사이의 정수)
+                        5. 항목별 상세 요약 (각 항목별 1문장 요약, 없으면 null)
+                           - 핏감 (fit)
+                           - 촉감 (touch)
+                           - 신축성 (flexibility)
+                           - 비침 (sheerness)
+                           - 두께감 (thickness)
+                           - 계절감 (season)
 
                         작성 가이드:
                         - 실구매자들의 생생한 경험(사이즈감, 착용감, 실제 색감 등)을 중심으로 요약해주세요.
+                        - **구매 만족도 점수 산정 시 매우 비판적으로 평가해주세요.**
+                        - 단점이 하나라도 있다면 점수를 과감하게 깎아주세요.
+                        - 90점 이상은 정말 완벽한 제품에만 부여하고, 보통은 70~80점대가 나오도록 해주세요.
                         - 반드시 아래와 같은 JSON 형식으로만 출력해주세요. 마크다운 코드 블럭 없이 순수 JSON만 출력하세요.
                         
                         {
                             "pros": ["장점1", "장점2", "장점3"],
                             "cons": ["단점1", "단점2", "단점3"],
-                            "fitStyle": ["핏/스타일1", "핏/스타일2", "핏/스타일3"]
+                            "fitStyle": ["핏/스타일1", "핏/스타일2", "핏/스타일3"],
+                            "satisfactionScore": 75,
+                            "specs": {
+                                "fit": "정사이즈보다 약간 여유있게 나왔습니다.",
+                                "touch": "부드럽고 까슬거림이 없습니다.",
+                                "flexibility": "신축성이 좋아 활동하기 편합니다.",
+                                "sheerness": "비침이 거의 없어 단독 착용 가능합니다.",
+                                "thickness": "봄/가을에 입기 적당한 두께입니다.",
+                                "season": "환절기에 입기 딱 좋습니다."
+                            }
                         }
                         
                         리뷰 내용:
@@ -58,7 +78,7 @@ export async function POST(request: Request) {
                             const arrayMatch = cleanText.match(/\[[\s\S]*\]/);
                             if (arrayMatch) {
                                 const arr = JSON.parse(arrayMatch[0]);
-                                summary = { pros: arr, cons: [], fitStyle: [] };
+                                summary = { pros: arr, cons: [], fitStyle: [], satisfactionScore: 0 };
                             }
                         }
                     } catch (e) {

@@ -40,6 +40,41 @@ function SearchContent() {
    const [fitPrediction, setFitPrediction] = useState<any>(null);
    const [isFitAnalyzing, setIsFitAnalyzing] = useState(false);
 
+   // Recent Items State
+   const [recentItems, setRecentItems] = useState<any[]>([]);
+
+   // Load recent items on mount
+   useEffect(() => {
+      const saved = localStorage.getItem('valyou_recent_items');
+      if (saved) {
+         try {
+            setRecentItems(JSON.parse(saved));
+         } catch (e) {
+            console.error('Failed to parse recent items', e);
+         }
+      }
+   }, []);
+
+   // Save current item to recent items
+   useEffect(() => {
+      if (data && data.basicInfo) {
+         const newItem = {
+            goodsNo: data.basicInfo.goodsNo,
+            imageUrl: data.basicInfo.imageUrl,
+            title: data.basicInfo.title,
+            brand: data.basicInfo.brand,
+            timestamp: Date.now()
+         };
+
+         setRecentItems(prev => {
+            const filtered = prev.filter(item => item.goodsNo !== newItem.goodsNo);
+            const updated = [newItem, ...filtered].slice(0, 10);
+            localStorage.setItem('valyou_recent_items', JSON.stringify(updated));
+            return updated;
+         });
+      }
+   }, [data]);
+
    useEffect(() => {
       fetchUserProfile();
    }, []);
@@ -640,6 +675,89 @@ function SearchContent() {
                               </div>
                            </div>
 
+                           {/* Satisfaction Gauge (Speedometer) */}
+                           {summary?.satisfactionScore && (
+                              <div className="mb-8 pb-8 border-b border-neutral-200">
+                                 <div className="flex items-center justify-between mb-6">
+                                    <h5 className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Satisfaction Probability</h5>
+                                    <div className="flex items-baseline gap-1">
+                                       <span className="text-2xl font-black text-black">{summary.satisfactionScore}</span>
+                                       <span className="text-xs font-bold text-neutral-400">%</span>
+                                    </div>
+                                 </div>
+
+                                 <div className="relative w-full max-w-[240px] mx-auto aspect-[2/1]">
+                                    <svg viewBox="0 0 200 110" className="w-full h-full overflow-visible">
+                                       {/* Defs for Gradient */}
+                                       <defs>
+                                          <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                             <stop offset="0%" stopColor="#ef4444" />
+                                             <stop offset="50%" stopColor="#eab308" />
+                                             <stop offset="100%" stopColor="#22c55e" />
+                                          </linearGradient>
+                                       </defs>
+
+                                       {/* Background Track */}
+                                       <path
+                                          d="M 20 100 A 80 80 0 0 1 180 100"
+                                          fill="none"
+                                          stroke="#f5f5f5"
+                                          strokeWidth="12"
+                                          strokeLinecap="round"
+                                       />
+
+                                       {/* Value Arc */}
+                                       <path
+                                          d="M 20 100 A 80 80 0 0 1 180 100"
+                                          fill="none"
+                                          stroke="url(#gaugeGradient)"
+                                          strokeWidth="12"
+                                          strokeLinecap="round"
+                                          strokeDasharray="251.2"
+                                          strokeDashoffset={251.2 - (251.2 * summary.satisfactionScore) / 100}
+                                          className="transition-all duration-1000 ease-out"
+                                       />
+
+                                       {/* Tick Marks */}
+                                       {[0, 25, 50, 75, 100].map((tick) => {
+                                          const angle = (tick / 100) * 180 - 180;
+                                          const rad = (angle * Math.PI) / 180;
+                                          const x1 = 100 + 70 * Math.cos(rad);
+                                          const y1 = 100 + 70 * Math.sin(rad);
+                                          const x2 = 100 + 62 * Math.cos(rad);
+                                          const y2 = 100 + 62 * Math.sin(rad);
+                                          return (
+                                             <line
+                                                key={tick}
+                                                x1={x1}
+                                                y1={y1}
+                                                x2={x2}
+                                                y2={y2}
+                                                stroke="#e5e5e5"
+                                                strokeWidth="2"
+                                             />
+                                          );
+                                       })}
+
+                                       {/* Needle */}
+                                       <g
+                                          className="transition-transform duration-1000 ease-out origin-[100px_100px]"
+                                          style={{ transform: `rotate(${(summary.satisfactionScore / 100) * 180 - 90}deg)` }}
+                                       >
+                                          <circle cx="100" cy="100" r="6" fill="#171717" />
+                                          <path d="M 100 100 L 100 25" stroke="#171717" strokeWidth="4" strokeLinecap="round" />
+                                       </g>
+                                    </svg>
+
+                                    {/* Labels */}
+                                    <div className="absolute bottom-0 left-0 w-full flex justify-between px-4 text-[10px] font-bold text-neutral-300">
+                                       <span>0</span>
+                                       <span>100</span>
+                                    </div>
+                                 </div>
+                              </div>
+                           )}
+
                            {isSummaryLoading ? (
                               <div className="space-y-4 opacity-50">
                                  <div className="h-4 bg-neutral-200 w-3/4 animate-pulse"></div>
@@ -716,18 +834,30 @@ function SearchContent() {
                         {(data.basicInfo.fit || data.basicInfo.season || data.basicInfo.touch || data.basicInfo.flexibility || data.basicInfo.sheerness || data.basicInfo.thickness) && (
                            <section>
                               <h3 className="text-xs font-black tracking-widest text-neutral-400 mb-6 uppercase">Product Specs</h3>
-                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  {[
-                                    { label: 'FIT', value: data.basicInfo.fit },
-                                    { label: 'TOUCH', value: data.basicInfo.touch },
-                                    { label: 'FLEX', value: data.basicInfo.flexibility },
-                                    { label: 'SHEER', value: data.basicInfo.sheerness },
-                                    { label: 'THICK', value: data.basicInfo.thickness },
-                                    { label: 'SEASON', value: data.basicInfo.season },
+                                    { label: 'FIT', value: data.basicInfo.fit, summary: summary?.specs?.fit },
+                                    { label: 'TOUCH', value: data.basicInfo.touch, summary: summary?.specs?.touch },
+                                    { label: 'FLEX', value: data.basicInfo.flexibility, summary: summary?.specs?.flexibility },
+                                    { label: 'SHEER', value: data.basicInfo.sheerness, summary: summary?.specs?.sheerness },
+                                    { label: 'THICK', value: data.basicInfo.thickness, summary: summary?.specs?.thickness },
+                                    { label: 'SEASON', value: data.basicInfo.season, summary: summary?.specs?.season },
                                  ].map((item, i) => (
-                                    <div key={i} className="border border-neutral-100 p-6 flex flex-col items-center justify-center text-center gap-2 hover:border-black transition-colors">
-                                       <span className="text-[10px] font-bold text-neutral-300 tracking-widest">{item.label}</span>
-                                       <span className="text-sm font-bold text-black">{item.value || '-'}</span>
+                                    <div key={i} className="border border-neutral-100 p-6 flex flex-col justify-center gap-2 hover:border-black transition-colors group">
+                                       <div className="flex items-center justify-between mb-1">
+                                          <span className="text-[10px] font-bold text-neutral-300 tracking-widest group-hover:text-black transition-colors">{item.label}</span>
+                                          <span className="text-xs font-bold text-black bg-neutral-100 px-2 py-0.5 rounded-sm">{item.value || '-'}</span>
+                                       </div>
+                                       {isSummaryLoading ? (
+                                          <div className="space-y-1.5 mt-1">
+                                             <div className="h-3.5 w-full bg-neutral-100 rounded animate-pulse" />
+                                             <div className="h-3.5 w-2/3 bg-neutral-100 rounded animate-pulse" />
+                                          </div>
+                                       ) : (
+                                          <p className="text-sm font-medium text-neutral-600 leading-relaxed">
+                                             {item.summary || '리뷰 데이터가 부족하여 요약할 수 없습니다.'}
+                                          </p>
+                                       )}
                                     </div>
                                  ))}
                               </div>
@@ -883,6 +1013,34 @@ function SearchContent() {
                   )}
                </div>
             </div>
+            {/* Recently Viewed Section */}
+            {recentItems.length > 0 && (
+               <div className="mt-20 pt-12 border-t border-neutral-100">
+                  <h3 className="text-xs font-black tracking-widest text-neutral-400 mb-6 uppercase">Recently Viewed</h3>
+                  <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                     {recentItems.map((item, i) => (
+                        <Link
+                           key={i}
+                           href={`/search?url=https://www.musinsa.com/app/goods/${item.goodsNo}`}
+                           className="flex-shrink-0 w-24 group"
+                        >
+                           <div className="aspect-[3/4] relative bg-neutral-100 mb-2 overflow-hidden rounded-sm">
+                              <Image
+                                 src={item.imageUrl}
+                                 alt={item.title}
+                                 fill
+                                 className="object-cover group-hover:scale-105 transition-transform duration-300"
+                              />
+                           </div>
+                           <div className="space-y-0.5">
+                              <div className="text-[10px] font-bold text-neutral-400 truncate">{item.brand}</div>
+                              <div className="text-[10px] font-medium text-neutral-800 truncate leading-tight">{item.title}</div>
+                           </div>
+                        </Link>
+                     ))}
+                  </div>
+               </div>
+            )}
          </main>
       </div>
    );
