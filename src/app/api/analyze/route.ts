@@ -43,10 +43,24 @@ export async function GET(request: Request) {
 
   try {
     const { searchParams } = new URL(request.url);
-    const url = searchParams.get('url');
-    console.log('🔍 Received URL:', url); // Log the received URL.
+    let url = searchParams.get('url');
+    console.log('🔍 Received URL:', url);
 
     if (!url) return NextResponse.json({ error: 'URL이 필요합니다.' }, { status: 400 });
+
+    // 0. URL 확장 (단축 URL 대응)
+    try {
+      // 무신사 단축 URL 패턴이거나, 일반적인 단축 URL인 경우 리다이렉트 추적
+      if (!url.includes('musinsa.com/app/goods') && !url.includes('musinsa.com/products')) {
+        console.log('🔄 단축 URL 감지, 원본 URL 추적 중...');
+        const response = await fetch(url, { method: 'HEAD', redirect: 'follow' });
+        url = response.url;
+        console.log('✅ 최종 URL:', url);
+      }
+    } catch (e) {
+      console.error('⚠️ URL 확장 실패:', e);
+      // 실패해도 원래 URL로 시도
+    }
 
     // 1. 상품 ID 추출
     // 지원 형식: /products/123456, /app/goods/123456
