@@ -17,22 +17,20 @@ export const postRouter = createTRPCRouter({
 
   create: protectedProcedure
     .input(z.object({ name: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      return ctx.db.post.create({
-        data: {
-          name: input.name,
-          createdBy: { connect: { id: ctx.session.user.id } },
-        },
-      });
+    .mutation(async ({ input }) => {
+      // Mock implementation for LocalStorage migration
+      return {
+        id: Math.random(),
+        name: input.name,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdById: "mock-user-id",
+      };
     }),
 
-  getLatest: protectedProcedure.query(async ({ ctx }) => {
-    const post = await ctx.db.post.findFirst({
-      orderBy: { createdAt: "desc" },
-      where: { createdBy: { id: ctx.session.user.id } },
-    });
-
-    return post ?? null;
+  getLatest: protectedProcedure.query(async () => {
+    // Mock implementation for LocalStorage migration
+    return null;
   }),
 
   getSecretMessage: protectedProcedure.query(() => {

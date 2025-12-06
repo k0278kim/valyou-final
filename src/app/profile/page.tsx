@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { storage, type ProfileItem } from '../../utils/storage';
 
 export default function ProfilePage() {
     const [url, setUrl] = useState('');
@@ -12,38 +13,34 @@ export default function ProfilePage() {
     const [isStatsSaving, setIsStatsSaving] = useState(false);
 
     useEffect(() => {
-        fetchProfile();
+        loadData();
+
+        const handleStorageChange = () => loadData();
+        window.addEventListener('valyou_storage_change', handleStorageChange);
+        return () => window.removeEventListener('valyou_storage_change', handleStorageChange);
     }, []);
 
     useEffect(() => {
-        calculateIdealSize();
+        if (items.length > 0) {
+            const ideal = storage.calculateIdealSize(items);
+            setIdealSize(ideal);
+        } else {
+            setIdealSize(null);
+        }
     }, [items]);
 
-    const fetchProfile = async () => {
-        try {
-            const res = await fetch('/api/profile');
-            const json = await res.json();
-            if (json.success) {
-                setItems(json.data.items || []);
-                if (json.data.userStats) setUserStats(json.data.userStats);
-            }
-        } catch (err) {
-            console.error('Failed to fetch profile:', err);
-        }
+    const loadData = () => {
+        const data = storage.get();
+        setItems(data.items);
+        setUserStats(data.userStats);
     };
 
     const handleUpdateStats = async () => {
         setIsStatsSaving(true);
         try {
-            await fetch('/api/profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'UPDATE_STATS',
-                    height: userStats.height,
-                    weight: userStats.weight
-                })
-            });
+            const data = storage.updateStats(userStats.height, userStats.weight);
+            setItems(data.items);
+            setUserStats(data.userStats);
         } catch (err) {
             console.error(err);
         } finally {
@@ -66,29 +63,20 @@ export default function ProfilePage() {
                 const sizeTable = analyzeJson.data.sizeTable;
 
                 // 2. Add to profile
-                const addRes = await fetch('/api/profile', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: 'ADD_ITEM',
-                        item: {
-                            goodsNo: product.goodsNo,
-                            title: product.title,
-                            brand: product.brand,
-                            imageUrl: product.imageUrl,
-                            sizeTable: sizeTable, // Save size table for analysis
-                            category1: product.category1,
-                            category2: product.category2,
-                            link: product.link || url // Save the link
-                        }
-                    })
-                });
+                const newItem = {
+                    goodsNo: product.goodsNo,
+                    title: product.title,
+                    brand: product.brand,
+                    imageUrl: product.imageUrl,
+                    sizeTable: sizeTable,
+                    category1: product.category1,
+                    category2: product.category2,
+                    link: product.link || url
+                };
 
-                const addJson = await addRes.json();
-                if (addJson.success) {
-                    setItems(addJson.data.items);
-                    setUrl('');
-                }
+                const data = storage.addItem(newItem);
+                setItems(data.items);
+                setUrl('');
             } else {
                 alert('상품 정보를 불러오는데 실패했습니다.');
             }
@@ -102,18 +90,12 @@ export default function ProfilePage() {
 
     const handleUpdateFit = async (goodsNo: string, fitStatus: string, selectedSize: string) => {
         try {
-            const res = await fetch('/api/profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'UPDATE_FIT',
-                    item: { goodsNo, fitStatus, selectedSize }
-                })
-            });
-            const json = await res.json();
-            if (json.success) {
-                setItems(json.data.items);
-            }
+            const validFitStatus = (fitStatus === 'GOOD' || fitStatus === 'BIG' || fitStatus === 'SMALL')
+                ? fitStatus as 'GOOD' | 'BIG' | 'SMALL'
+                : 'GOOD'; // Default fallback
+
+            const data = storage.updateFit(goodsNo, validFitStatus, selectedSize);
+            setItems(data.items);
         } catch (err) {
             console.error(err);
         }
@@ -125,65 +107,14 @@ export default function ProfilePage() {
 
         if (!confirm('정말 삭제하시겠습니까?')) return;
         try {
-            const res = await fetch('/api/profile', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'DELETE_ITEM',
-                    item: { goodsNo }
-                })
-            });
-            const json = await res.json();
-            if (json.success) {
-                setItems(json.data.items);
-            }
+            const data = storage.deleteItem(goodsNo);
+            setItems(data.items);
         } catch (err) {
             console.error(err);
         }
     }
 
-    const calculateIdealSize = () => {
-        const goodItems = items.filter(i => i.fitStatus === 'GOOD' && i.selectedSize && i.sizeTable);
-        if (goodItems.length === 0) {
-            setIdealSize(null);
-            return;
-        }
 
-        // Group by category1
-        const categoryStats: any = {};
-
-        goodItems.forEach(item => {
-            const cat = item.category1 || '기타';
-            if (!categoryStats[cat]) categoryStats[cat] = {};
-
-            const sizeRow = item.sizeTable.rows.find((r: any) => r.name === item.selectedSize);
-            if (!sizeRow) return;
-
-            item.sizeTable.headers.forEach((header: string, idx: number) => {
-                const val = parseFloat(sizeRow.values[idx]);
-                if (!isNaN(val)) {
-                    if (!categoryStats[cat][header]) categoryStats[cat][header] = { sum: 0, count: 0, min: val, max: val };
-                    categoryStats[cat][header].sum += val;
-                    categoryStats[cat][header].count += 1;
-                    categoryStats[cat][header].min = Math.min(categoryStats[cat][header].min, val);
-                    categoryStats[cat][header].max = Math.max(categoryStats[cat][header].max, val);
-                }
-            });
-        });
-
-        const result: any = {};
-        for (const cat in categoryStats) {
-            result[cat] = {};
-            for (const key in categoryStats[cat]) {
-                result[cat][key] = {
-                    avg: (categoryStats[cat][key].sum / categoryStats[cat][key].count).toFixed(1),
-                    min: categoryStats[cat][key].min,
-                    max: categoryStats[cat][key].max
-                };
-            }
-        }
-        setIdealSize(result);
-    };
 
     return (
         <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
