@@ -40,6 +40,11 @@ function SearchContent() {
    const [fitPrediction, setFitPrediction] = useState<any>(null);
    const [isFitAnalyzing, setIsFitAnalyzing] = useState(false);
 
+   // Fit Heatmap State
+   const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
+   const [isHeatmapLoading, setIsHeatmapLoading] = useState(false);
+   const [showHeatmap, setShowHeatmap] = useState(false);
+
    // Recent Items State
    const [recentItems, setRecentItems] = useState<any[]>([]);
 
@@ -285,6 +290,41 @@ function SearchContent() {
       }
    }, [data, summaryFilter]);
 
+   // Fetch Heatmap Data
+   const fetchHeatmap = async () => {
+      if (!data?.reviews || !data?.basicInfo?.imageUrl || heatmapPoints.length > 0 || isHeatmapLoading) return;
+
+      setIsHeatmapLoading(true);
+      try {
+         // Use top 50 reviews for analysis
+         const reviews = data.reviews.slice(0, 50).map((r: any) => r.content);
+
+         const res = await fetch('/api/fit-heatmap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+               reviews,
+               imageUrl: data.basicInfo.imageUrl
+            })
+         });
+
+         const json = await res.json();
+         if (json.points) {
+            setHeatmapPoints(json.points);
+         }
+      } catch (err) {
+         console.error('Heatmap fetch failed:', err);
+      } finally {
+         setIsHeatmapLoading(false);
+      }
+   };
+
+   useEffect(() => {
+      if (showHeatmap && heatmapPoints.length === 0) {
+         fetchHeatmap();
+      }
+   }, [showHeatmap]);
+
    const filterSocial = (items: any[]) => {
       if (!data) return { exact: [], brand: [] };
       const exact = items.filter((i: any) => i.isExactMatch);
@@ -387,8 +427,58 @@ function SearchContent() {
                {/* LEFT COLUMN (Fixed on Desktop) */}
                <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-8">
                   {/* Product Image */}
-                  <div className="aspect-[3/4] bg-neutral-100 relative overflow-hidden">
+                  {/* Product Image */}
+                  <div className="aspect-[3/4] bg-neutral-100 relative overflow-hidden group">
                      <Image src={data.basicInfo.imageUrl} alt="" fill className="object-cover" unoptimized />
+
+                     {/* Heatmap Overlay */}
+                     {showHeatmap && (
+                        <div className="absolute inset-0 pointer-events-none transition-opacity duration-500 opacity-100 z-10">
+                           {heatmapPoints.map((point, idx) => (
+                              <div
+                                 key={idx}
+                                 className="absolute rounded-full blur-xl"
+                                 style={{
+                                    left: `${point.x}%`,
+                                    top: `${point.y}%`,
+                                    width: `${point.radius * 2}%`,
+                                    height: `${point.radius * 2}%`,
+                                    transform: 'translate(-50%, -50%)',
+                                    background: `radial-gradient(circle, rgba(255, 0, 0, ${point.intensity / 100 * 0.6}) 0%, rgba(255, 0, 0, 0) 70%)`,
+                                 }}
+                              />
+                           ))}
+                        </div>
+                     )}
+
+                     {/* Heatmap Toggle Button */}
+                     <button
+                        onClick={() => setShowHeatmap(!showHeatmap)}
+                        className={`absolute bottom-4 right-4 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-2 z-20 ${showHeatmap
+                           ? 'bg-black text-white shadow-lg scale-105'
+                           : 'bg-white/90 text-black hover:bg-black hover:text-white backdrop-blur-sm'
+                           }`}
+                     >
+                        {isHeatmapLoading ? (
+                           <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                           <ScanEye size={14} />
+                        )}
+                        {showHeatmap ? 'Hide Heatmap' : 'Fit Heatmap'}
+                     </button>
+
+                     {/* Heatmap Legend */}
+                     {showHeatmap && heatmapPoints.length > 0 && (
+                        <div className="absolute top-4 right-4 bg-black/80 backdrop-blur-md text-white px-3 py-2 rounded-lg text-[10px] font-medium animate-fade-in z-20">
+                           <div className="flex items-center gap-2 mb-1">
+                              <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                              <span>Tight / Issue Area</span>
+                           </div>
+                           <div className="text-neutral-400 text-[9px]">
+                              Based on AI review analysis
+                           </div>
+                        </div>
+                     )}
                   </div>
 
                   {/* Product Info */}
