@@ -16,12 +16,18 @@ const geist = Geist({
   variable: "--font-geist-sans",
 });
 
+import { GoogleAnalytics } from "~/components/GoogleAnalytics";
+import { env } from "~/env";
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geist.variable}`}>
       <body>
+        {env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics gaId={env.NEXT_PUBLIC_GA_ID} />
+        )}
         <TRPCReactProvider>
           {children}
         </TRPCReactProvider>
