@@ -533,8 +533,8 @@ function SearchContent() {
                      <button
                         onClick={() => setShowHeatmap(!showHeatmap)}
                         className={`absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-[11px] font-bold tracking-widest transition-all duration-300 flex items-center gap-2 z-20 ${showHeatmap
-                              ? 'bg-black text-white border border-black'
-                              : 'bg-white text-black border border-neutral-200 hover:border-black hover:bg-black hover:text-white'
+                           ? 'bg-black text-white border border-black'
+                           : 'bg-white text-black border border-neutral-200 hover:border-black hover:bg-black hover:text-white'
                            }`}
                      >
                         {isHeatmapLoading ? (
@@ -1022,7 +1022,7 @@ function SearchContent() {
                                              <div className="h-3.5 w-2/3 bg-neutral-100 rounded animate-pulse" />
                                           </div>
                                        ) : (
-                                          <p className="text-sm font-medium text-neutral-600 leading-relaxed">
+                                          <p className={`text-sm font-medium leading-relaxed ${item.summary ? 'text-neutral-600' : 'text-neutral-400'}`}>
                                              {item.summary || '리뷰 데이터가 부족하여 요약할 수 없습니다.'}
                                           </p>
                                        )}
