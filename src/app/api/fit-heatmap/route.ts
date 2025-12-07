@@ -26,17 +26,18 @@ export async function POST(request: Request) {
             - area: The specific body part (e.g., "shoulders", "waist", "sleeves", "chest").
             - issue: The type of issue (e.g., "tight", "loose", "wrinkles").
             - intensity: A score from 0-100 indicating how severe or frequent the issue is.
+            - review_indices: A list of 0-based indices of the reviews that mention this issue.
             
             Only include issues with significant mention.
             IMPORTANT: Output 'area' and 'issue' in Korean.
             
             Reviews:
-            ${reviewsText}
+            ${reviews.map((r: any, i: number) => `[${i}] ${r}`).join('\n')}
             
             Output JSON format:
             {
                 "issues": [
-                    { "area": "어깨", "issue": "낌", "intensity": 80 },
+                    { "area": "어깨", "issue": "낌", "intensity": 80, "review_indices": [0, 2, 5] },
                     ...
                 ]
             }
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
             - category: One of ['weight', 'texture', 'fit', 'length', 'wrinkle', 'other'].
             - keyword: A very short, catchy Korean phrase (2-3 words) suitable for an icon label (e.g., "무거움 주의", "마찰 보풀", "박스 핏", "기장 짧음").
             - description: A specific and descriptive Korean explanation of WHY this is an issue. Make it sound like a helpful tip from a friend.
+            - review_indices: Pass through the review_indices from the input issue.
             
             Output JSON format:
             {
@@ -92,7 +94,8 @@ export async function POST(request: Request) {
                         "intensity": 80, 
                         "category": "fit",
                         "keyword": "어깨 낌 주의",
-                        "description": "팔을 들 때 어깨 라인이 타이트하게 느껴질 수 있어요."
+                        "description": "팔을 들 때 어깨 라인이 타이트하게 느껴질 수 있어요.",
+                        "review_indices": [0, 2, 5]
                     },
                     ...
                 ]

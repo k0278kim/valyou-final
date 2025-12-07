@@ -261,7 +261,7 @@ export default function ProfilePage() {
                                 <div key={item.goodsNo} className="group">
                                     {/* Image Card - Wrapped in Link */}
                                     <Link
-                                        href={`/search?url=${encodeURIComponent(item.link || `https://www.musinsa.com/app/goods/${item.goodsNo}`)}`}
+                                        href={`/search?url=${encodeURIComponent(item.link || `https://www.musinsa.com/app/goods/${item.goodsNo}`)}&source=closet`}
                                         className="block relative aspect-[3/4] bg-neutral-100 mb-6 overflow-hidden cursor-pointer"
                                     >
                                         <img
