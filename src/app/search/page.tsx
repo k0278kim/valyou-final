@@ -7,7 +7,7 @@ import Image from 'next/image';
 import {
    Search, Youtube, Instagram, BookOpen,
    ArrowLeft, ExternalLink, ScanEye, CheckCircle2, Ruler, Shirt, AlertCircle, TrendingUp, Sparkles,
-   Scale, ArrowUpDown, Info
+   Scale, ArrowUpDown, Info, Camera, User
 } from 'lucide-react';
 import { storage } from '../../utils/storage';
 
@@ -26,7 +26,9 @@ function SearchContent() {
    // Initialize loading to true if URL is present to hide search bar immediately
    const [loading, setLoading] = useState(!!searchParams.get('url') || !!searchParams.get('text'));
    const [error, setError] = useState<string | null>(null);
-   const [activeTab, setActiveTab] = useState<'visual' | 'info'>('info');
+   const [activeTab, setActiveTab] = useState<'visual' | 'info' | 'photos'>('info');
+   const [selectedReview, setSelectedReview] = useState<any>(null);
+   const [filterSimilarBody, setFilterSimilarBody] = useState(false);
    const [summary, setSummary] = useState<any>(null);
    const [isSummaryLoading, setIsSummaryLoading] = useState(false);
    const [reviewSort, setReviewSort] = useState<'latest' | 'high' | 'low'>('latest');
@@ -177,9 +179,15 @@ function SearchContent() {
       return bestSize;
    };
 
-   const handleAnalyze = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!url) return;
+   const handleAnalyze = async (e?: React.FormEvent | null, overrideUrl?: string) => {
+      e?.preventDefault();
+      const targetUrl = overrideUrl || url;
+
+      if (!targetUrl) {
+         setLoading(false); // Ensure loading is turned off if no URL
+         return;
+      }
+
       setLoading(true);
       setData(null);
       setSummary(null);
@@ -188,7 +196,7 @@ function SearchContent() {
       setHasMore(true);
 
       try {
-         const res = await fetch(`/api/analyze?url=${encodeURIComponent(url)}`);
+         const res = await fetch(`/api/analyze?url=${encodeURIComponent(targetUrl)}`);
          if (!res.ok) throw new Error('서버 요청에 실패했습니다.');
 
          const json = await res.json();
@@ -256,12 +264,14 @@ function SearchContent() {
          }
       }
 
-      if (targetUrl && !data && !loading) {
+      // We check !data to avoid re-fetching if we already have results.
+      if (targetUrl && !data) {
          setUrl(targetUrl);
-         // Use a timeout to ensure state update before triggering
-         setTimeout(() => {
-            handleAnalyze({ preventDefault: () => { } } as any);
-         }, 0);
+         // Pass the URL directly to avoid state race conditions
+         handleAnalyze(null, targetUrl);
+      } else if (!targetUrl && loading) {
+         // If we started with loading=true but found no URL, stop loading
+         setLoading(false);
       }
    }, [searchParams]);
 
@@ -647,7 +657,115 @@ function SearchContent() {
                      >
                         Social & Reviews
                      </button>
+                     <button
+                        onClick={() => setActiveTab('photos')}
+                        className={`flex-1 py-4 text-sm font-bold tracking-widest uppercase transition-colors ${activeTab === 'photos' ? 'text-black border-b-2 border-black -mb-0.5' : 'text-neutral-300 hover:text-neutral-500'}`}
+                     >
+                        Photo Reviews
+                     </button>
                   </div>
+
+                  {/* ========== PHOTOS TAB ========== */}
+                  {activeTab === 'photos' && (
+                     <div className="animate-fade-in-up">
+                        <div className="flex items-center justify-between mb-6">
+                           <h3 className="text-xs font-black tracking-widest text-neutral-400 uppercase flex items-center gap-2">
+                              <Camera size={14} /> Photo Reviews ({data.reviews.filter((r: any) => r.reviewImage).length})
+                           </h3>
+
+                           {/* Similar Body Filter Toggle */}
+                           <button
+                              onClick={() => {
+                                 if (!userProfile?.userStats?.height || !userProfile?.userStats?.weight) {
+                                    alert('프로필에서 키와 몸무게를 설정해주세요!');
+                                    return;
+                                 }
+                                 setFilterSimilarBody(!filterSimilarBody);
+                              }}
+                              className={`flex items-center gap-2 px-3 py-1.5 border text-[10px] font-bold tracking-tight transition-all duration-300 ${filterSimilarBody
+                                    ? 'bg-black border-black text-white'
+                                    : 'bg-white border-neutral-200 text-neutral-400 hover:border-black hover:text-black'
+                                 }`}
+                           >
+                              <User size={12} strokeWidth={2.5} />
+                              <span>MY SIZE ONLY</span>
+                           </button>
+                        </div>
+
+                        {(() => {
+                           // Filter Logic
+                           const allPhotoReviews = data.reviews.filter((r: any) => r.reviewImage);
+
+                           const filteredReviews = filterSimilarBody && userProfile?.userStats
+                              ? allPhotoReviews.filter((r: any) => {
+                                 if (!r.userHeight || !r.userWeight) return false;
+
+                                 const userH = parseInt(userProfile.userStats.height);
+                                 const userW = parseInt(userProfile.userStats.weight);
+                                 const reviewH = parseInt(r.userHeight);
+                                 const reviewW = parseInt(r.userWeight);
+
+                                 if (isNaN(userH) || isNaN(userW) || isNaN(reviewH) || isNaN(reviewW)) return false;
+
+                                 // Range: +/- 5cm, +/- 5kg
+                                 return Math.abs(userH - reviewH) <= 5 && Math.abs(userW - reviewW) <= 5;
+                              })
+                              : allPhotoReviews;
+
+                           return (
+                              <>
+                                 {filteredReviews.length > 0 ? (
+                                    <div className="grid grid-cols-3 gap-1">
+                                       {filteredReviews.map((r: any, i: number) => (
+                                          <div
+                                             key={i}
+                                             className="relative aspect-square bg-neutral-100 group cursor-pointer overflow-hidden"
+                                             onClick={() => setSelectedReview(r)}
+                                          >
+                                             <img
+                                                src={r.reviewImage}
+                                                className="w-full h-full object-cover transition duration-500 group-hover:scale-110"
+                                                loading="lazy"
+                                             />
+                                             <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+
+                                             {/* Overlay Info */}
+                                             <div className="absolute bottom-0 left-0 right-0 p-2 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="text-white text-[10px] font-bold truncate">
+                                                   {r.userName}
+                                                </div>
+                                                <div className="text-white/80 text-[10px] truncate">
+                                                   {r.profile}
+                                                </div>
+                                             </div>
+                                          </div>
+                                       ))}
+                                    </div>
+                                 ) : (
+                                    <div className="py-20 text-center border border-neutral-100 rounded-lg">
+                                       <Camera className="mx-auto text-neutral-200 mb-4" size={32} />
+                                       <p className="text-sm font-bold text-neutral-400">
+                                          {filterSimilarBody ? '비슷한 체형의 리뷰가 없습니다.' : '포토 리뷰가 없습니다.'}
+                                       </p>
+                                    </div>
+                                 )}
+
+                                 {/* Review Detail Modal */}
+                                 {selectedReview && (
+                                    <PhotoReviewModal
+                                       selectedReview={selectedReview}
+                                       reviews={filteredReviews} // Pass filtered list for navigation
+                                       onClose={() => setSelectedReview(null)}
+                                       onSelect={setSelectedReview}
+                                    />
+                                 )}
+                              </>
+                           );
+                        })()}
+                     </div>
+                  )}
+
+                  {/* ========== VISUAL TAB ========== */}
 
                   {/* ========== VISUAL TAB ========== */}
                   {activeTab === 'visual' && (
@@ -1227,6 +1345,128 @@ function SearchContent() {
                </div>
             )}
          </main>
+      </div>
+   );
+}
+
+function PhotoReviewModal({ selectedReview, reviews, onClose, onSelect }: { selectedReview: any, reviews: any[], onClose: () => void, onSelect: (review: any) => void }) {
+   const photoReviews = reviews.filter((r: any) => r.reviewImage);
+   const currentIndex = photoReviews.findIndex((r: any) => r.reviewNo === selectedReview.reviewNo);
+   const hasPrev = currentIndex > 0;
+   const hasNext = currentIndex < photoReviews.length - 1;
+
+   const handlePrev = (e?: any) => {
+      e?.stopPropagation();
+      if (hasPrev) onSelect(photoReviews[currentIndex - 1]);
+   };
+
+   const handleNext = (e?: any) => {
+      e?.stopPropagation();
+      if (hasNext) onSelect(photoReviews[currentIndex + 1]);
+   };
+
+   // Keyboard Navigation
+   useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+         if (e.key === 'ArrowLeft') handlePrev();
+         if (e.key === 'ArrowRight') handleNext();
+         if (e.key === 'Escape') onClose();
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => window.removeEventListener('keydown', handleKeyDown);
+   }, [selectedReview]); // Re-bind when selectedReview changes to update closures
+
+   return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 md:p-8 bg-black/90 backdrop-blur-md animate-fade-in" onClick={onClose}>
+         <div className="bg-white w-full max-w-4xl h-full md:h-auto md:max-h-[90vh] md:aspect-[1.5/1] shadow-2xl relative animate-scale-in flex flex-col md:flex-row overflow-hidden" onClick={e => e.stopPropagation()}>
+
+            {/* Close Button */}
+            <button
+               onClick={onClose}
+               className="absolute top-4 right-4 z-50 p-2 bg-white/10 hover:bg-black hover:text-white text-black backdrop-blur-md border border-black/10 rounded-full transition-all duration-300"
+            >
+               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+               </svg>
+            </button>
+
+            {/* Image Section */}
+            <div className="w-full h-[50vh] md:h-full md:w-[60%] bg-black relative flex items-center justify-center group select-none shrink-0">
+               <img
+                  src={selectedReview.reviewImage}
+                  className="w-full h-full object-contain md:object-cover"
+               />
+
+               {/* Navigation Buttons */}
+               {hasPrev && (
+                  <button
+                     onClick={handlePrev}
+                     className="absolute left-4 top-1/2 -translate-y-1/2 z-50 p-3 bg-white/10 hover:bg-black hover:text-white text-black backdrop-blur-md border border-black/10 rounded-full transition-all duration-300"
+                  >
+                     <ArrowLeft size={24} />
+                  </button>
+               )}
+               {hasNext && (
+                  <button
+                     onClick={handleNext}
+                     className="absolute right-4 top-1/2 -translate-y-1/2 z-50 p-3 bg-white/10 hover:bg-black hover:text-white text-black backdrop-blur-md border border-black/10 rounded-full transition-all duration-300"
+                  >
+                     <ArrowLeft className="rotate-180" size={24} />
+                  </button>
+               )}
+            </div>
+
+            {/* Content Section */}
+            <div className="w-full md:w-[40%] flex flex-col bg-white">
+               {/* Header Info */}
+               <div className="p-6 md:p-8 border-b border-neutral-100">
+                  <div className="flex items-center gap-4 mb-6">
+                     <div className="w-12 h-12 rounded-full bg-neutral-100 overflow-hidden border border-neutral-100">
+                        {selectedReview.userImage ? (
+                           <img src={selectedReview.userImage} className="w-full h-full object-cover" />
+                        ) : (
+                           <div className="w-full h-full flex items-center justify-center text-neutral-300">
+                              <ScanEye size={20} />
+                           </div>
+                        )}
+                     </div>
+                     <div>
+                        <div className="font-black text-lg tracking-tight">{selectedReview.userName}</div>
+                        <div className="text-xs font-bold text-neutral-400 tracking-widest uppercase mt-1">{selectedReview.date}</div>
+                     </div>
+                  </div>
+
+                  <div className="flex gap-1">
+                     {[...Array(5)].map((_, i) => (
+                        <div key={i} className={`w-3 h-3 rounded-full ${i < selectedReview.rating ? 'bg-black' : 'bg-neutral-200'}`} />
+                     ))}
+                  </div>
+               </div>
+
+               {/* Scrollable Content */}
+               <div className="flex-1 p-6 md:p-8 overflow-y-auto">
+                  <div className="flex flex-wrap gap-2 mb-8">
+                     {(selectedReview.userHeight || selectedReview.userWeight) && (
+                        <span className="text-[10px] font-black bg-black text-white px-3 py-1.5 uppercase tracking-widest">
+                           {selectedReview.userHeight ? `${selectedReview.userHeight}CM` : ''}
+                           {selectedReview.userHeight && selectedReview.userWeight ? ' / ' : ''}
+                           {selectedReview.userWeight ? `${selectedReview.userWeight}KG` : ''}
+                        </span>
+                     )}
+                     {selectedReview.option && (
+                        <span className="text-[10px] font-bold border border-neutral-200 text-neutral-500 px-3 py-1.5 uppercase tracking-widest">
+                           {selectedReview.option}
+                        </span>
+                     )}
+                  </div>
+
+                  <p className="text-sm md:text-base leading-relaxed text-neutral-800 font-medium whitespace-pre-wrap">
+                     {selectedReview.content}
+                  </p>
+               </div>
+            </div>
+         </div>
       </div>
    );
 }
