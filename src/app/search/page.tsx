@@ -243,9 +243,24 @@ function SearchContent() {
    // URL 파라미터로 자동 실행
    useEffect(() => {
       const queryUrl = searchParams.get('url');
-      if (queryUrl && !data && !loading) {
-         setUrl(queryUrl);
-         handleAnalyze({ preventDefault: () => { } } as any);
+      const queryText = searchParams.get('text'); // For Web Share Target
+
+      let targetUrl = queryUrl;
+
+      // If no direct URL, try to extract from text (common in Android share)
+      if (!targetUrl && queryText) {
+         const urlMatch = queryText.match(/(https?:\/\/[^\s]+)/);
+         if (urlMatch) {
+            targetUrl = urlMatch[0];
+         }
+      }
+
+      if (targetUrl && !data && !loading) {
+         setUrl(targetUrl);
+         // Use a timeout to ensure state update before triggering
+         setTimeout(() => {
+            handleAnalyze({ preventDefault: () => { } } as any);
+         }, 0);
       }
    }, [searchParams]);
 
