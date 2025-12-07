@@ -7,7 +7,7 @@ import Image from 'next/image';
 import {
    Search, Youtube, Instagram, BookOpen,
    ArrowLeft, ExternalLink, ScanEye, CheckCircle2, Ruler, Shirt, AlertCircle, TrendingUp, Sparkles,
-   Scale, ArrowUpDown, Info, Camera, User
+   Scale, ArrowUpDown, Info, Camera, User, Check
 } from 'lucide-react';
 import { storage } from '../../utils/storage';
 
@@ -789,12 +789,26 @@ function SearchContent() {
                {/* RIGHT COLUMN (Scrollable) */}
                <div className="lg:col-span-7 space-y-12">
                   {showHeatmap && (
-                     <div className="space-y-8 animate-fade-in custom-scrollbar h-[calc(100vh-200px)] overflow-y-auto pr-2 pb-20">
+                     <div className="space-y-8 animate-fade-in h-[calc(100vh-200px)] overflow-y-auto pr-2 pb-20 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                         <div className="flex items-center justify-between border-b pb-4 border-neutral-100 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
                            <h2 className="text-xl font-black tracking-tighter flex items-center gap-2">
                               <ScanEye className="text-red-500" />
                               HEATMAP SOURCE DATA
                            </h2>
+
+                           {/* Body Type Filter Toggle */}
+                           {userProfile?.userStats && (
+                              <button
+                                 onClick={() => setSimilarBodyFilter(!similarBodyFilter)}
+                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide transition-all border ${similarBodyFilter
+                                    ? 'bg-black border-black text-white'
+                                    : 'bg-white border-neutral-200 text-neutral-400 hover:border-neutral-300 hover:text-neutral-500'
+                                    }`}
+                              >
+                                 {similarBodyFilter && <Check size={10} strokeWidth={4} />}
+                                 SIMILAR BODY TYPE
+                              </button>
+                           )}
                         </div>
 
                         {isHeatmapLoading ? (
@@ -812,86 +826,148 @@ function SearchContent() {
                                  ANALYZING REVIEWS...
                               </div>
                            </div>
-                        ) : heatmapPoints.length > 0 ? (
-                           <>
-                              {(expandedPointId !== null ? [heatmapPoints[expandedPointId]] : heatmapPoints).map((point, idx) => {
-                                 // Careful with idx if we filter. 
-                                 // Actually, map index 'idx' usually used for key. 
-                                 // If we filter, we should use a stable key if possible, or just index is fine for display.
-                                 // Let's use point keyword or combination as key to be safe if list changes.
+                        ) : (
+                           (() => {
+                              // Pre-calculate filtered points and reviews
+                              const targetPoints = expandedPointId !== null ? [heatmapPoints[expandedPointId]] : heatmapPoints;
 
-                                 const Icon = getCategoryIcon(point.category);
-                                 // Filter reviews linked to this point 
-                                 // (API now returns review_indices for each point)
-                                 const relevantReviews = point.review_indices
+                              const displayPoints = targetPoints.map(point => {
+                                 let relevantReviews = point.review_indices
                                     ? point.review_indices.map((i: number) => data.reviews[i]).filter(Boolean)
                                     : [];
 
-                                 if (relevantReviews.length === 0) return null;
+                                 if (similarBodyFilter && userProfile?.userStats?.height && userProfile?.userStats?.weight) {
+                                    const userH = parseFloat(userProfile.userStats.height);
+                                    const userW = parseFloat(userProfile.userStats.weight);
 
+                                    relevantReviews = relevantReviews.filter((r: any) => {
+                                       let h = r.userHeight;
+                                       let w = r.userWeight;
+
+                                       if (typeof h === 'string') h = parseFloat(h.replace(/[^0-9.]/g, ''));
+                                       if (typeof w === 'string') w = parseFloat(w.replace(/[^0-9.]/g, ''));
+
+                                       if (!h || !w || isNaN(h) || isNaN(w)) return false;
+
+                                       return Math.abs(userH - h) <= 5 && Math.abs(userW - w) <= 5;
+                                    });
+                                 }
+
+                                 return { ...point, relevantReviews };
+                              }).filter(p => p.relevantReviews.length > 0);
+
+                              if (displayPoints.length === 0) {
                                  return (
-                                    <div key={idx} className="space-y-4">
-                                       <div className="flex items-center gap-2">
-                                          <div className={`p-1.5 rounded-full ${expandedPointId !== null ? 'bg-red-500' : 'bg-black'} text-white transition-colors duration-300`}>
-                                             <Icon size={14} strokeWidth={2.5} />
-                                          </div>
-                                          <h3 className="text-sm font-black uppercase tracking-wider">
-                                             {point.keyword}
-                                          </h3>
-                                          {expandedPointId !== null && (
-                                             <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
-                                                FILTER ACTIVE
-                                             </span>
-                                          )}
-                                       </div>
-
-                                       <div className="grid grid-cols-1 gap-3">
-                                          {relevantReviews.map((review: any, rIdx: number) => (
-                                             <div key={rIdx} className="p-5 bg-neutral-50 rounded-xl border border-neutral-100 text-sm leading-relaxed relative group hover:border-black/10 transition-colors">
-                                                <div className="flex items-center gap-2 mb-2 text-xs font-bold text-neutral-400">
-                                                   <span className="text-black">{review.userName || 'Unknown User'}</span>
-                                                   <span>•</span>
-                                                   {(review.userHeight || review.userWeight) && (
-                                                      <>
-                                                         <span className="text-neutral-500 font-medium">
-                                                            {review.userHeight ? `${review.userHeight}cm` : ''}
-                                                            {review.userHeight && review.userWeight ? ' / ' : ''}
-                                                            {review.userWeight ? `${review.userWeight}kg` : ''}
-                                                         </span>
-                                                         <span>•</span>
-                                                      </>
-                                                   )}
-                                                   <div className="flex gap-0.5">
-                                                      {[...Array(5)].map((_, i) => (
-                                                         <div key={i} className={`w-2 h-2 rounded-full ${i < review.rating ? 'bg-black' : 'bg-neutral-200'}`} />
-                                                      ))}
-                                                   </div>
-                                                </div>
-                                                <p className="text-neutral-700">{review.content}</p>
-                                             </div>
-                                          ))}
-                                       </div>
+                                    <div className="py-20 text-center text-neutral-400">
+                                       {similarBodyFilter && heatmapPoints.length > 0 ? (
+                                          <>
+                                             <User className="mx-auto mb-4 opacity-30" size={32} />
+                                             <p className="text-sm font-bold mb-2">No Matching Body Types</p>
+                                             <p className="text-xs text-neutral-300">Try turning off the filter to see more results.</p>
+                                          </>
+                                       ) : (
+                                          <>
+                                             <ScanEye className="mx-auto mb-4 opacity-50" size={32} />
+                                             <p className="text-sm font-bold">No Highlighting Found</p>
+                                          </>
+                                       )}
                                     </div>
                                  );
-                              })}
+                              }
 
-                              {expandedPointId !== null && (
-                                 <button
-                                    onClick={() => setExpandedPointId(null)}
-                                    className="w-full py-4 text-xs font-bold text-neutral-400 hover:text-black border-t border-neutral-100 mt-8"
-                                 >
-                                    SHOW ALL CATEGORIES
-                                 </button>
-                              )}
-                           </>
-                        ) : (
-                           <div className="py-20 text-center text-neutral-400">
-                              <ScanEye className="mx-auto mb-4 opacity-50" size={32} />
-                              <p className="text-sm font-bold">No Highlighting Found</p>
-                           </div>
+                              return (
+                                 <>
+                                    {displayPoints.map((point, idx) => {
+                                       const Icon = getCategoryIcon(point.category);
+                                       return (
+                                          <div key={idx} className="space-y-4">
+                                             <div className="flex items-center gap-2">
+                                                <div className={`p-1.5 rounded-full ${expandedPointId !== null ? 'bg-red-500' : 'bg-black'} text-white transition-colors duration-300`}>
+                                                   <Icon size={14} strokeWidth={2.5} />
+                                                </div>
+                                                <h3 className="text-sm font-black uppercase tracking-wider">
+                                                   {point.keyword}
+                                                </h3>
+                                                {expandedPointId !== null && (
+                                                   <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
+                                                      FILTER ACTIVE
+                                                   </span>
+                                                )}
+                                             </div>
+
+                                             <div className="grid grid-cols-1 gap-3">
+                                                {point.relevantReviews.map((review: any, rIdx: number) => (
+                                                   <div key={rIdx} className="p-5 bg-white rounded-2xl border border-neutral-100 text-sm leading-relaxed relative group hover:border-black/10 transition-colors">
+                                                      {/* Header: Name & Date */}
+                                                      <div className="flex items-center justify-between mb-3">
+                                                         <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-black text-neutral-400">
+                                                               {review.userName ? review.userName[0] : 'U'}
+                                                            </div>
+                                                            <span className="font-bold text-black text-xs tracking-tight">
+                                                               {review.userName || 'Unknown User'}
+                                                            </span>
+                                                         </div>
+                                                         {review.date && (
+                                                            <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest">
+                                                               {review.date}
+                                                            </span>
+                                                         )}
+                                                      </div>
+
+                                                      {/* Meta: Rating & Stats */}
+                                                      <div className="flex items-center gap-3 mb-4 flex-wrap">
+                                                         <div className="flex gap-0.5">
+                                                            {[...Array(5)].map((_, i) => (
+                                                               <div key={i} className={`w-2 h-2 rounded-full ${i < review.rating ? 'bg-black' : 'bg-neutral-200'}`} />
+                                                            ))}
+                                                         </div>
+
+                                                         {(review.userHeight || review.userWeight || review.option) && (
+                                                            <div className="flex items-center gap-1.5 pl-3 border-l border-neutral-100">
+                                                               {review.option && (
+                                                                  <span className="bg-neutral-50 border border-neutral-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-neutral-500">
+                                                                     {review.option}
+                                                                  </span>
+                                                               )}
+                                                               {review.userHeight && (
+                                                                  <span className="bg-neutral-50 border border-neutral-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-neutral-500">
+                                                                     {review.userHeight}cm
+                                                                  </span>
+                                                               )}
+                                                               {review.userWeight && (
+                                                                  <span className="bg-neutral-50 border border-neutral-100 px-1.5 py-0.5 rounded text-[10px] font-bold text-neutral-500">
+                                                                     {review.userWeight}kg
+                                                                  </span>
+                                                               )}
+                                                            </div>
+                                                         )}
+                                                      </div>
+
+                                                      <p className="text-neutral-800 font-medium leading-relaxed">
+                                                         {review.content}
+                                                      </p>
+                                                   </div>
+                                                ))}
+                                             </div>
+                                          </div>
+                                       );
+                                    })}
+
+                                    {expandedPointId !== null && (
+                                       <button
+                                          onClick={() => setExpandedPointId(null)}
+                                          className="w-full py-4 text-xs font-bold text-neutral-400 hover:text-black border-t border-neutral-100 mt-8"
+                                       >
+                                          SHOW ALL CATEGORIES
+                                       </button>
+                                    )}
+                                 </>
+                              );
+                           })()
                         )}
 
-                        {/* 
+                        {/*
                            Optional: Display remaining reviews that were not linked to any specific heatmap point?
                            For now, the user requested grouping by heatmap categories, so we focus on that.
                         */}
