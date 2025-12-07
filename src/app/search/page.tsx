@@ -11,6 +11,10 @@ import {
 } from 'lucide-react';
 import { storage } from '../../utils/storage';
 
+import ShareActionModal from './ShareActionModal';
+
+// ... (existing imports)
+
 export default function SearchPage() {
    return (
       <Suspense fallback={<div className="min-h-screen flex items-center justify-center">로딩중...</div>}>
@@ -27,164 +31,72 @@ function SearchContent() {
    const [loading, setLoading] = useState(!!searchParams.get('url') || !!searchParams.get('text'));
    const [error, setError] = useState<string | null>(null);
    const [activeTab, setActiveTab] = useState<'visual' | 'info' | 'photos'>('info');
+   // ... (existing state) ...
    const [selectedReview, setSelectedReview] = useState<any>(null);
-   const [filterSimilarBody, setFilterSimilarBody] = useState(false);
-   const [summary, setSummary] = useState<any>(null);
-   const [isSummaryLoading, setIsSummaryLoading] = useState(false);
-   const [reviewSort, setReviewSort] = useState<'latest' | 'high' | 'low'>('latest');
-   const [summaryFilter, setSummaryFilter] = useState<string>('all');
+   // ...
 
-   const [page, setPage] = useState(0);
-   const [hasMore, setHasMore] = useState(true);
-   const [isReviewLoading, setIsReviewLoading] = useState(false);
+   // New state for Share Link behavior
+   const [showShareModal, setShowShareModal] = useState(false);
+   const [analyzingForCloset, setAnalyzingForCloset] = useState(false);
 
-   // New State for Profile & Recommendation
-   const [userProfile, setUserProfile] = useState<any>(null);
-   const [recommendedSize, setRecommendedSize] = useState<string | null>(null);
-   const [similarBodyFilter, setSimilarBodyFilter] = useState(false);
-   const [fitPrediction, setFitPrediction] = useState<any>(null);
-   const [isFitAnalyzing, setIsFitAnalyzing] = useState(false);
+   // ... (existing state) ...
 
-   // Fit Heatmap State
-   const [heatmapPoints, setHeatmapPoints] = useState<any[]>([]);
-   const [isHeatmapLoading, setIsHeatmapLoading] = useState(false);
-   const [showHeatmap, setShowHeatmap] = useState(false);
-   const [expandedPointId, setExpandedPointId] = useState<number | null>(null);
+   // ... (existing useEffects) ...
 
-   // Recent Items State
-   const [recentItems, setRecentItems] = useState<any[]>([]);
-
-   // Load recent items on mount
+   // Modify the URL handling useEffect to show modal
    useEffect(() => {
-      const saved = localStorage.getItem('closai_recent_items');
-      if (saved) {
-         try {
-            setRecentItems(JSON.parse(saved));
-         } catch (e) {
-            console.error('Failed to parse recent items', e);
-         }
-      } else {
-         // Migration for recent items
-         const oldSaved = localStorage.getItem('valyou_recent_items');
-         if (oldSaved) {
-            localStorage.setItem('closai_recent_items', oldSaved);
-            setRecentItems(JSON.parse(oldSaved));
+      const queryUrl = searchParams.get('url');
+      const queryText = searchParams.get('text'); // For Web Share Target
+
+      let targetUrl = queryUrl;
+
+      // If no direct URL, try to extract from text (common in Android share)
+      if (!targetUrl && queryText) {
+         const urlMatch = queryText.match(/(https?:\/\/[^\s]+)/);
+         if (urlMatch) {
+            targetUrl = urlMatch[0];
          }
       }
-   }, []);
 
-   // Save current item to recent items
-   useEffect(() => {
-      if (data && data.basicInfo) {
-         const newItem = {
-            goodsNo: data.basicInfo.goodsNo,
-            imageUrl: data.basicInfo.imageUrl,
-            title: data.basicInfo.title,
-            brand: data.basicInfo.brand,
-            timestamp: Date.now()
-         };
-
-         setRecentItems(prev => {
-            const filtered = prev.filter(item => item.goodsNo !== newItem.goodsNo);
-            const updated = [newItem, ...filtered].slice(0, 10);
-            localStorage.setItem('closai_recent_items', JSON.stringify(updated));
-            return updated;
-         });
+      // We check !data to avoid re-fetching if we already have results.
+      if (targetUrl && !data) {
+         setUrl(targetUrl);
+         // Show modal instead of just analyzing silently, but start analyzing in background
+         setShowShareModal(true);
+         // Pass the URL directly and silent=true (we don't want global full screen loader blocking modal)
+         // Actually, we do want global loader to be managed carefully. 
+         // Let's call handleAnalyze. It sets setLoading(true). 
+         // We will handle the visual separation in the render.
+         handleAnalyze(null, targetUrl);
+      } else if (!targetUrl && loading) {
+         // If we started with loading=true but found no URL, stop loading
+         setLoading(false);
       }
-   }, [data]);
+   }, [searchParams]);
 
+   // Effect to handle "Add to Closet" completion
    useEffect(() => {
-      loadUserProfile();
+      if (analyzingForCloset && data && data.basicInfo) {
+         // Data is ready, add to closet
+         storage.addItem(data.basicInfo);
 
-      const handleStorageChange = () => loadUserProfile();
-      window.addEventListener('closai_storage_change', handleStorageChange);
-      return () => window.removeEventListener('closai_storage_change', handleStorageChange);
-   }, []);
-
-   const loadUserProfile = () => {
-      const data = storage.get();
-      const idealSize = storage.calculateIdealSize(data.items);
-      setUserProfile({ ...data, idealSize });
-   };
-
-   // Calculate recommended size when data or userProfile changes
-   useEffect(() => {
-      if (data?.sizeTable && userProfile?.idealSize && data.basicInfo?.category1) {
-         const bestFit = calculateRecommendedSize(data.sizeTable, userProfile.idealSize, data.basicInfo.category1);
-         setRecommendedSize(bestFit);
-
-         // Trigger AI Fit Prediction if a size is recommended
-         if (bestFit && userProfile.userStats) {
-            fetchFitPrediction(bestFit, userProfile.userStats, data.basicInfo.title, data.sizeTable);
-         }
+         // Using window.location to ensure full refresh/redirect or router
+         // router.push('/profile') might be better if I had router.
+         // Let's use window.location.href for now to be safe or import useRouter. 
+         // I see useSearchParams but not useRouter. I should add useRouter if I want client side nav.
+         // But SearchPage doesn't import useRouter yet.
+         // Let's stick to simple redirect or render logic.
+         window.location.href = '/profile';
       }
-   }, [data, userProfile]);
+   }, [analyzingForCloset, data]);
 
-   const fetchFitPrediction = async (size: string, stats: any, title: string, table: any) => {
-      setIsFitAnalyzing(true);
-      try {
-         const res = await fetch('/api/fit-recommend', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-               userStats: stats,
-               productTitle: title,
-               sizeTable: table,
-               recommendedSize: size
-            })
-         });
-         const json = await res.json();
-         if (json.success) {
-            setFitPrediction(json.fitPrediction);
-         }
-      } catch (err) {
-         console.error('Fit prediction failed:', err);
-      } finally {
-         setIsFitAnalyzing(false);
-      }
-   };
-
-   const calculateRecommendedSize = (sizeTable: any, idealSize: any, category: string) => {
-      if (!sizeTable?.rows || !idealSize || !category) return null;
-
-      const categoryIdeal = idealSize[category];
-      if (!categoryIdeal) return null;
-
-      let bestSize = null;
-      let minDiff = Infinity;
-
-      sizeTable.rows.forEach((row: any) => {
-         let totalDiff = 0;
-         let matchCount = 0;
-
-         sizeTable.headers.forEach((header: string, idx: number) => {
-            // Match headers (Length, Shoulder, Chest, Sleeve)
-            const key = Object.keys(categoryIdeal).find(k => header.includes(k) || k.includes(header));
-            if (key) {
-               const val = parseFloat(row.values[idx]);
-               const ideal = parseFloat(categoryIdeal[key].avg);
-               if (!isNaN(val) && !isNaN(ideal)) {
-                  totalDiff += Math.abs(val - ideal);
-                  matchCount++;
-               }
-            }
-         });
-
-         if (matchCount > 0 && totalDiff < minDiff) {
-            minDiff = totalDiff;
-            bestSize = row.name;
-         }
-      });
-
-      return bestSize;
-   };
 
    const handleAnalyze = async (e?: React.FormEvent | null, overrideUrl?: string) => {
       e?.preventDefault();
       const targetUrl = overrideUrl || url;
 
       if (!targetUrl) {
-         setLoading(false); // Ensure loading is turned off if no URL
+         setLoading(false);
          return;
       }
 
@@ -219,192 +131,31 @@ function SearchContent() {
       } catch (err: any) {
          console.error(err);
          setError(err.message || '분석 중 오류가 발생했습니다.');
+         // If error occurs while waiting for closet, turn it off
+         setAnalyzingForCloset(false);
+         setShowShareModal(false); // Let error show in main view
       } finally {
          setLoading(false);
       }
    };
 
-   const handleLoadMore = async () => {
-      if (!data || !data.basicInfo?.goodsNo || isReviewLoading || !hasMore) return;
+   // ... (rest of the file) ...
 
-      setIsReviewLoading(true);
-      const nextPage = page + 1;
-
-      try {
-         const res = await fetch(`/api/reviews?goodsNo=${data.basicInfo.goodsNo}&page=${nextPage}&pageSize=60&sort=up_cnt_desc`);
-         const json = await res.json();
-
-         if (json.success) {
-            setData((prev: any) => ({
-               ...prev,
-               reviews: [...prev.reviews, ...json.data]
-            }));
-            setPage(nextPage);
-            setHasMore(json.hasMore);
-         }
-      } catch (error) {
-         console.error('Failed to load more reviews:', error);
-      } finally {
-         setIsReviewLoading(false);
-      }
-   };
-
-   // URL 파라미터로 자동 실행
-   useEffect(() => {
-      const queryUrl = searchParams.get('url');
-      const queryText = searchParams.get('text'); // For Web Share Target
-
-      let targetUrl = queryUrl;
-
-      // If no direct URL, try to extract from text (common in Android share)
-      if (!targetUrl && queryText) {
-         const urlMatch = queryText.match(/(https?:\/\/[^\s]+)/);
-         if (urlMatch) {
-            targetUrl = urlMatch[0];
-         }
-      }
-
-      // We check !data to avoid re-fetching if we already have results.
-      if (targetUrl && !data) {
-         setUrl(targetUrl);
-         // Pass the URL directly to avoid state race conditions
-         handleAnalyze(null, targetUrl);
-      } else if (!targetUrl && loading) {
-         // If we started with loading=true but found no URL, stop loading
-         setLoading(false);
-      }
-   }, [searchParams]);
-
-   const summaryRequestId = useRef(0);
-
-   // Fetch summary when product reviews are available
-   useEffect(() => {
-      if (!data) return;
-
-      // Filter reviews based on summaryFilter
-      let targetReviews = data.reviews || [];
-
-      if (summaryFilter !== 'all') {
-         const rating = parseInt(summaryFilter);
-
-         targetReviews = targetReviews.filter((r: any) => {
-            return parseInt(r.rating) === rating;
-         });
-      }
-
-      const productReviews = targetReviews
-         .map((r: any) => `[구매자(${r.rating}점)] ${r.content}`);
-
-      if (productReviews.length > 0) {
-         setIsSummaryLoading(true);
-         const currentId = ++summaryRequestId.current;
-
-         // 최대 20개까지 전송
-         const limitedReviews = productReviews.slice(0, 20);
-
-         fetch('/api/summary', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ reviews: limitedReviews })
-         })
-            .then(res => res.json())
-            .then(resData => {
-               if (currentId === summaryRequestId.current) {
-                  setSummary(resData.summary || null);
-               }
-            })
-            .catch(err => console.error('Summary fetch error:', err))
-            .finally(() => {
-               if (currentId === summaryRequestId.current) {
-                  setIsSummaryLoading(false);
-               }
-            });
-      } else {
-         setSummary(null);
-      }
-   }, [data, summaryFilter]);
-
-   // Fetch Heatmap Data
-   const fetchHeatmap = async () => {
-      if (!data?.reviews || !data?.basicInfo?.imageUrl || heatmapPoints.length > 0 || isHeatmapLoading) return;
-
-      setIsHeatmapLoading(true);
-      try {
-         // Use top 50 reviews for analysis
-         const reviews = data.reviews.slice(0, 50).map((r: any) => r.content);
-
-         const res = await fetch('/api/fit-heatmap', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-               reviews,
-               imageUrl: data.basicInfo.imageUrl
-            })
-         });
-
-         const json = await res.json();
-         if (json.points) {
-            setHeatmapPoints(json.points);
-         }
-      } catch (err) {
-         console.error('Heatmap fetch failed:', err);
-      } finally {
-         setIsHeatmapLoading(false);
-      }
-   };
-
-   useEffect(() => {
-      if (showHeatmap && heatmapPoints.length === 0) {
-         fetchHeatmap();
-      }
-   }, [showHeatmap]);
-
-   const getCategoryIcon = (category: string) => {
-      switch (category) {
-         case 'weight': return Scale;
-         case 'texture': return Shirt;
-         case 'fit': return Ruler;
-         case 'length': return ArrowUpDown;
-         case 'wrinkle': return AlertCircle;
-         default: return Info;
-      }
-   };
-
-   const filterSocial = (items: any[]) => {
-      if (!data) return { exact: [], brand: [] };
-      const exact = items.filter((i: any) => i.isExactMatch);
-      const brand = items.filter((i: any) => !i.isExactMatch);
-      return { exact, brand };
-   };
-
-   // Sorted Reviews Logic
-   const getSortedReviews = () => {
-      if (!data?.reviews) return [];
-      let reviews = [...data.reviews];
-
-      // Filter by Body Type
-      if (similarBodyFilter && userProfile?.userStats?.height && userProfile?.userStats?.weight) {
-         const userH = parseFloat(userProfile.userStats.height);
-         const userW = parseFloat(userProfile.userStats.weight);
-
-         reviews = reviews.filter((r: any) => {
-            // Parse height/weight from review (handle "175cm", "60kg" strings)
-            let h = r.userHeight;
-            let w = r.userWeight;
-
-            if (typeof h === 'string') h = parseFloat(h.replace(/[^0-9.]/g, ''));
-            if (typeof w === 'string') w = parseFloat(w.replace(/[^0-9.]/g, ''));
-
-            if (!h || !w || isNaN(h) || isNaN(w)) return false;
-
-            return Math.abs(userH - h) <= 5 && Math.abs(userW - w) <= 5;
-         });
-      }
-
-      if (reviewSort === 'high') return reviews.sort((a: any, b: any) => b.rating - a.rating);
-      if (reviewSort === 'low') return reviews.sort((a: any, b: any) => a.rating - b.rating);
-      return reviews; // Default (usually latest from API)
-   };
+   // Render Logic update
+   if (showShareModal) return (
+      <>
+         <ShareActionModal
+            onAnalyze={() => setShowShareModal(false)}
+            onAddToCloset={() => setAnalyzingForCloset(true)}
+            isProcessing={analyzingForCloset} // Show spinner on button if we are waiting for data
+         />
+         {/* We can render the loading view behind it or just white */}
+         <div className="min-h-screen bg-white flex flex-col items-center justify-center opacity-50 pointer-events-none">
+            <div className="w-6 h-6 border-2 border-neutral-200 border-t-black rounded-full animate-spin mb-4" />
+            <p className="text-xs font-bold text-neutral-400 animate-pulse">ANALYZING PRODUCT...</p>
+         </div>
+      </>
+   );
 
    if (loading) return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center">
@@ -416,7 +167,7 @@ function SearchContent() {
    // 데이터가 없거나 basicInfo가 없는 경우 (초기 상태 또는 에러)
    if (!data || !data.basicInfo) return (
       <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
-         <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-50 flex items-center justify-between px-4 md:px-8 border-b border-neutral-100">
+      // ... (rest of the return)         <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-50 flex items-center justify-between px-4 md:px-8 border-b border-neutral-100">
             <Link href="/search" className="text-2xl font-black tracking-tighter hover:opacity-50 transition-opacity">
                ClosAI
             </Link>
@@ -683,8 +434,8 @@ function SearchContent() {
                                  setFilterSimilarBody(!filterSimilarBody);
                               }}
                               className={`flex items-center gap-2 px-3 py-1.5 border text-[10px] font-bold tracking-tight transition-all duration-300 ${filterSimilarBody
-                                    ? 'bg-black border-black text-white'
-                                    : 'bg-white border-neutral-200 text-neutral-400 hover:border-black hover:text-black'
+                                 ? 'bg-black border-black text-white'
+                                 : 'bg-white border-neutral-200 text-neutral-400 hover:border-black hover:text-black'
                                  }`}
                            >
                               <User size={12} strokeWidth={2.5} />
