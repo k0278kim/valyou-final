@@ -23,7 +23,8 @@ function SearchContent() {
    const searchParams = useSearchParams();
    const [url, setUrl] = useState(searchParams.get('url') || '');
    const [data, setData] = useState<any>(null);
-   const [loading, setLoading] = useState(false);
+   // Initialize loading to true if URL is present to hide search bar immediately
+   const [loading, setLoading] = useState(!!searchParams.get('url') || !!searchParams.get('text'));
    const [error, setError] = useState<string | null>(null);
    const [activeTab, setActiveTab] = useState<'visual' | 'info'>('info');
    const [summary, setSummary] = useState<any>(null);
@@ -405,13 +406,16 @@ function SearchContent() {
    // 데이터가 없거나 basicInfo가 없는 경우 (초기 상태 또는 에러)
    if (!data || !data.basicInfo) return (
       <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white">
-         <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-50 flex items-center justify-between px-8 border-b border-neutral-100">
+         <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-50 flex items-center justify-between px-4 md:px-8 border-b border-neutral-100">
             <Link href="/search" className="text-2xl font-black tracking-tighter hover:opacity-50 transition-opacity">
                ClosAI
             </Link>
-            <nav className="flex gap-8">
+            <nav className="flex gap-4 md:gap-8">
                <Link href="/search" className="text-sm font-bold text-black border-b-2 border-black pb-1">SEARCH</Link>
                <Link href="/profile" className="text-sm font-medium text-neutral-400 hover:text-black transition-colors">WARDROBE</Link>
+               <Link href="/share-guide" className="text-neutral-400 hover:text-black transition-colors" title="iOS Share Guide">
+                  <Info size={20} />
+               </Link>
             </nav>
          </header>
 
@@ -445,13 +449,16 @@ function SearchContent() {
    return (
       <div className="min-h-screen bg-white text-black font-sans selection:bg-black selection:text-white pb-24 lg:pb-0">
          {/* Minimal Header */}
-         <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-50 flex items-center justify-between px-8 border-b border-neutral-100">
+         <header className="fixed top-0 left-0 right-0 h-20 bg-white/90 backdrop-blur-xl z-50 flex items-center justify-between px-4 md:px-8 border-b border-neutral-100">
             <Link href="/search" className="text-2xl font-black tracking-tighter hover:opacity-50 transition-opacity">
                ClosAI
             </Link>
-            <nav className="flex gap-8">
+            <nav className="flex gap-4 md:gap-8">
                <Link href="/search" className="text-sm font-bold text-black border-b-2 border-black pb-1">SEARCH</Link>
                <Link href="/profile" className="text-sm font-medium text-neutral-400 hover:text-black transition-colors">WARDROBE</Link>
+               <Link href="/share-guide" className="text-neutral-400 hover:text-black transition-colors" title="iOS Share Guide">
+                  <Info size={20} />
+               </Link>
             </nav>
          </header>
 

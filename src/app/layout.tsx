@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: "ClosAI",
   description: "Your AI Fashion Assistant",
   icons: [{ rel: "icon", url: "/favicon.ico" }],
+  manifest: "/manifest.json",
 };
 
 const geist = Geist({
