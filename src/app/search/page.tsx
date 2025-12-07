@@ -7,7 +7,7 @@ import Image from 'next/image';
 import {
    Search, Youtube, Instagram, BookOpen,
    ArrowLeft, ExternalLink, ScanEye, CheckCircle2, Ruler, Shirt, AlertCircle, TrendingUp, Sparkles,
-   Scale, ArrowUpDown, Info, Camera, User, Check, X
+   Scale, ArrowUpDown, Info, Camera, User, Check, X, Plus
 } from 'lucide-react';
 import { storage } from '../../utils/storage';
 
@@ -712,21 +712,50 @@ function SearchContent() {
                         </div>
                      )}
 
-                     {/* Heatmap Toggle Button */}
-                     <button
-                        onClick={() => setShowHeatmap(!showHeatmap)}
-                        className={`absolute bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full text-[11px] font-bold tracking-widest transition-all duration-300 flex items-center gap-2 z-20 ${showHeatmap
-                           ? 'bg-black text-white border border-black'
-                           : 'bg-white text-black border border-neutral-200 hover:border-black hover:bg-black hover:text-white'
-                           }`}
-                     >
-                        {isHeatmapLoading ? (
-                           <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                           <ScanEye size={14} strokeWidth={2} />
-                        )}
-                        {showHeatmap ? 'HIDE HEATMAP' : 'FIT HEATMAP'}
-                     </button>
+                     {/* Floating Action Buttons */}
+                     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-3 z-20 w-full justify-center pointer-events-none">
+                        <div className="flex items-center gap-2 pointer-events-auto">
+                           {/* Heatmap Toggle */}
+                           <button
+                              onClick={() => setShowHeatmap(!showHeatmap)}
+                              className={`px-6 py-3 rounded-full text-[11px] font-bold tracking-widest transition-all duration-300 flex items-center gap-2 shadow-xl ${showHeatmap
+                                 ? 'bg-black text-white border border-black'
+                                 : 'bg-white text-black border border-neutral-200 hover:border-black hover:bg-black hover:text-white'
+                                 }`}
+                           >
+                              {isHeatmapLoading ? (
+                                 <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                 <ScanEye size={14} strokeWidth={2} />
+                              )}
+                              {showHeatmap ? 'HIDE HEATMAP' : 'FIT HEATMAP'}
+                           </button>
+
+                           {/* Add to Closet Button */}
+                           <button
+                              onClick={(e) => {
+                                 e.stopPropagation();
+                                 if (!data) return;
+                                 storage.addItem({
+                                    goodsNo: data.basicInfo.goodsNo || 'unknown',
+                                    title: data.basicInfo.title,
+                                    brand: data.basicInfo.brand,
+                                    imageUrl: data.basicInfo.imageUrl,
+                                    sizeTable: data.sizeTable,
+                                    category1: data.basicInfo.category1,
+                                    category2: data.basicInfo.category2,
+                                    link: searchParams?.get('url') || undefined
+                                 });
+                                 alert('옷장에 추가되었습니다!');
+                              }}
+                              className="px-6 py-3 rounded-full text-[11px] font-bold tracking-widest transition-all duration-300 flex items-center gap-2 shadow-xl bg-white text-black border border-neutral-200 hover:border-black hover:bg-black hover:text-white"
+                              aria-label="Add to Closet"
+                           >
+                              <Plus size={14} strokeWidth={2} />
+                              내 옷장
+                           </button>
+                        </div>
+                     </div>
 
 
                   </div>
@@ -796,19 +825,28 @@ function SearchContent() {
                               히트맵 상세 분석
                            </h2>
 
-                           {/* Body Type Filter Toggle */}
-                           {userProfile?.userStats && (
+                           <div className="flex items-center gap-2">
+                              {/* Body Type Filter Toggle */}
+                              {userProfile?.userStats && (
+                                 <button
+                                    onClick={() => setSimilarBodyFilter(!similarBodyFilter)}
+                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide transition-all border ${similarBodyFilter
+                                       ? 'bg-black border-black text-white'
+                                       : 'bg-white border-neutral-200 text-neutral-400 hover:border-neutral-300 hover:text-neutral-500'
+                                       }`}
+                                 >
+                                    {similarBodyFilter && <Check size={10} strokeWidth={4} />}
+                                    유사 체형 보기
+                                 </button>
+                              )}
+
                               <button
-                                 onClick={() => setSimilarBodyFilter(!similarBodyFilter)}
-                                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-black tracking-wide transition-all border ${similarBodyFilter
-                                    ? 'bg-black border-black text-white'
-                                    : 'bg-white border-neutral-200 text-neutral-400 hover:border-neutral-300 hover:text-neutral-500'
-                                    }`}
+                                 onClick={() => setShowHeatmap(false)}
+                                 className="p-1.5 rounded-full hover:bg-neutral-100 text-neutral-400 transition-colors"
                               >
-                                 {similarBodyFilter && <Check size={10} strokeWidth={4} />}
-                                 유사 체형 보기
+                                 <X size={16} />
                               </button>
-                           )}
+                           </div>
                         </div>
 
                         {isHeatmapLoading ? (
