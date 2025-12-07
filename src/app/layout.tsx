@@ -17,7 +17,12 @@ const geist = Geist({
 });
 
 import { GoogleAnalytics } from "~/components/GoogleAnalytics";
+import { PWAInstallPrompt } from "~/components/PWAInstallPrompt";
 import { env } from "~/env";
+
+export const viewport = {
+  themeColor: "#000000",
+};
 
 export default function RootLayout({
   children,
@@ -28,6 +33,7 @@ export default function RootLayout({
         {env.NEXT_PUBLIC_GA_ID && (
           <GoogleAnalytics gaId={env.NEXT_PUBLIC_GA_ID} />
         )}
+        <PWAInstallPrompt />
         <TRPCReactProvider>
           {children}
         </TRPCReactProvider>

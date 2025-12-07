@@ -26,4 +26,12 @@ const config = {
     },
 };
 
-export default config;
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+    dest: "public",
+    disable: false, // Enable in dev for testing
+    register: true,
+});
+
+export default withPWA(config);
