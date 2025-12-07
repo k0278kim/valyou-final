@@ -7,7 +7,7 @@ import Image from 'next/image';
 import {
    Search, Youtube, Instagram, BookOpen,
    ArrowLeft, ExternalLink, ScanEye, CheckCircle2, Ruler, Shirt, AlertCircle, TrendingUp, Sparkles,
-   Scale, ArrowUpDown, Info, Camera, User, Check
+   Scale, ArrowUpDown, Info, Camera, User, Check, X
 } from 'lucide-react';
 import { storage } from '../../utils/storage';
 
@@ -793,7 +793,7 @@ function SearchContent() {
                         <div className="flex items-center justify-between border-b pb-4 border-neutral-100 sticky top-0 bg-white/95 backdrop-blur-sm z-10">
                            <h2 className="text-xl font-black tracking-tighter flex items-center gap-2">
                               <ScanEye className="text-red-500" />
-                              HEATMAP SOURCE DATA
+                              히트맵 상세 분석
                            </h2>
 
                            {/* Body Type Filter Toggle */}
@@ -806,7 +806,7 @@ function SearchContent() {
                                     }`}
                               >
                                  {similarBodyFilter && <Check size={10} strokeWidth={4} />}
-                                 SIMILAR BODY TYPE
+                                 유사 체형 보기
                               </button>
                            )}
                         </div>
@@ -823,7 +823,7 @@ function SearchContent() {
                                  </div>
                               ))}
                               <div className="text-center text-xs font-bold text-neutral-400 pt-4">
-                                 ANALYZING REVIEWS...
+                                 AI가 리뷰 분석 중...
                               </div>
                            </div>
                         ) : (
@@ -862,13 +862,13 @@ function SearchContent() {
                                        {similarBodyFilter && heatmapPoints.length > 0 ? (
                                           <>
                                              <User className="mx-auto mb-4 opacity-30" size={32} />
-                                             <p className="text-sm font-bold mb-2">No Matching Body Types</p>
-                                             <p className="text-xs text-neutral-300">Try turning off the filter to see more results.</p>
+                                             <p className="text-sm font-bold mb-2">유사 체형 리뷰 없음</p>
+                                             <p className="text-xs text-neutral-300">필터를 해제하면 더 많은 리뷰를 볼 수 있습니다.</p>
                                           </>
                                        ) : (
                                           <>
                                              <ScanEye className="mx-auto mb-4 opacity-50" size={32} />
-                                             <p className="text-sm font-bold">No Highlighting Found</p>
+                                             <p className="text-sm font-bold">히트맵 데이터를 찾을 수 없습니다</p>
                                           </>
                                        )}
                                     </div>
@@ -890,7 +890,7 @@ function SearchContent() {
                                                 </h3>
                                                 {expandedPointId !== null && (
                                                    <span className="text-[10px] font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
-                                                      FILTER ACTIVE
+                                                      필터 적용됨
                                                    </span>
                                                 )}
                                              </div>
@@ -902,10 +902,10 @@ function SearchContent() {
                                                       <div className="flex items-center justify-between mb-3">
                                                          <div className="flex items-center gap-2">
                                                             <div className="w-6 h-6 rounded-full bg-neutral-100 flex items-center justify-center text-[10px] font-black text-neutral-400">
-                                                               {review.userName ? review.userName[0] : 'U'}
+                                                               {review.userName ? review.userName[0] : '알'}
                                                             </div>
                                                             <span className="font-bold text-black text-xs tracking-tight">
-                                                               {review.userName || 'Unknown User'}
+                                                               {review.userName || '알 수 없음'}
                                                             </span>
                                                          </div>
                                                          {review.date && (
@@ -959,7 +959,7 @@ function SearchContent() {
                                           onClick={() => setExpandedPointId(null)}
                                           className="w-full py-4 text-xs font-bold text-neutral-400 hover:text-black border-t border-neutral-100 mt-8"
                                        >
-                                          SHOW ALL CATEGORIES
+                                          전체 카테고리 보기
                                        </button>
                                     )}
                                  </>
