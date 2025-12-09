@@ -69,7 +69,8 @@ export async function GET(request: Request) {
 
     if (!goodsNo) return NextResponse.json({ error: '상품 ID를 찾을 수 없습니다.' }, { status: 400 });
 
-    // 2. 무신사 API 호출
+    // 2. 무신사 API 호출 (리뷰 다양성을 위해 4가지 정렬 병렬 호출)
+    // up_cnt_desc(추천순), goods_est_asc(별점낮은순), goods_est_desc(별점높은순), new(최신순)
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Referer': 'https://www.musinsa.com/'
@@ -80,18 +81,38 @@ export async function GET(request: Request) {
     let sizeList: any[] = [];
 
     try {
-      const [detailRes, reviewRes, sizeRes] = await Promise.all([
+      const reviewSorts = ['up_cnt_desc', 'goods_est_asc', 'goods_est_desc', 'new'];
+      const reviewRequests = reviewSorts.map(sort =>
+        fetch(`https://goods.musinsa.com/api2/review/v1/view/list?page=0&pageSize=20&goodsNo=${goodsNo}&sort=${sort}`, { headers })
+          .then(res => res.ok ? res.json() : null)
+          .catch(() => null)
+      );
+
+      const [detailRes, sizeRes, ...reviewResults] = await Promise.all([
         fetch(`https://goods-detail.musinsa.com/api2/goods/${goodsNo}`, { headers }),
-        fetch(`https://goods.musinsa.com/api2/review/v1/view/list?page=0&pageSize=60&goodsNo=${goodsNo}&sort=up_cnt_desc`, { headers }),
-        fetch(`https://goods-detail.musinsa.com/api2/goods/${goodsNo}/actual-size`, { headers })
+        fetch(`https://goods-detail.musinsa.com/api2/goods/${goodsNo}/actual-size`, { headers }),
+        ...reviewRequests
       ]);
 
       if (detailRes.ok) {
         const json = await detailRes.json();
         dData = json.data || {};
       }
-      if (reviewRes.ok) { const json = await reviewRes.json(); reviewList = json.data?.list || []; }
+
       if (sizeRes.ok) { const json = await sizeRes.json(); sizeList = json.data?.sizes || json.data || []; }
+
+      // 리뷰 병합 및 중복 제거
+      const allReviews = reviewResults
+        .filter(r => r && r.data && r.data.list)
+        .flatMap(r => r.data.list);
+
+      const seenReviews = new Set();
+      reviewList = allReviews.filter((item: any) => {
+        if (seenReviews.has(item.no)) return false;
+        seenReviews.add(item.no);
+        return true;
+      });
+
     } catch (e) { console.error('무신사 API 에러', e); }
 
     // 3. 기본 정보 구성
@@ -175,7 +196,7 @@ export async function GET(request: Request) {
         rating: item.grade,
         date: item.createDate ? item.createDate.split('T')[0] : '',
         profile: profile.bodySize || '', // 예: 170cm / 60kg (Legacy fallback)
-        size: item.goodsOptionName || '', // 예: L (Legacy fallback)
+        size: item.goodsOptionName || item.goodsOption || '', // 예: L (Legacy fallback)
         // New Fields
         option: item.goodsOption || '',
         userHeight: profile.userHeight || null,
